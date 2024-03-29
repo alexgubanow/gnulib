@@ -9,8 +9,8 @@ doc = gnulib
 
 lang_env = env LANG= LC_MESSAGES= LC_ALL= LANGUAGE=
 makeinfo_prog = makeinfo
-# ASCII_DASHES_AND_QUOTES=0 is needed for makeinfo versions ≥ 7.1.
-# CHECK_NORMAL_MENU_STRUCTURE=1 is needed for makeinfo versions ≥ 6.8.
+# ASCII_DASHES_AND_QUOTES=0 is needed for makeinfo versions >= 7.1.
+# CHECK_NORMAL_MENU_STRUCTURE=1 is needed for makeinfo versions >= 6.8.
 MAKEINFO = $(lang_env) $(makeinfo_prog) \
  -c ASCII_DASHES_AND_QUOTES=0 \
  -c CHECK_NORMAL_MENU_STRUCTURE=1

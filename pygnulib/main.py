@@ -45,7 +45,7 @@
 #   condition comes first.
 # - Use type hints to document functions and catch programming mistakes.
 #   To allow for type annotations and union type specifiers, using the
-#   syntax Type1 | Type2, for all versions of Python ≥ 3.7 use the
+#   syntax Type1 | Type2, for all versions of Python >= 3.7 use the
 #   'from __future__ import annotations' import at the top of files.
 #   Cf. <https://docs.python.org/3/library/__future__.html>
 #   and <https://stackoverflow.com/questions/73879925/>.

@@ -111,7 +111,7 @@ _GL_CXXALIAS_SYS (error, void,
                   (int __status, int __errnum, const char *__format, ...));
 # ifndef _GL_NO_INLINE_ERROR
 #  ifdef error
-/* Only gcc ≥ 4.7 has __builtin_va_arg_pack.  */
+/* Only gcc >= 4.7 has __builtin_va_arg_pack.  */
 #   if _GL_GNUC_PREREQ (4, 7)
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wattributes"
@@ -169,7 +169,7 @@ _GL_CXXALIAS_SYS (error_at_line, void,
                    unsigned int __lineno, const char *__format, ...));
 # ifndef _GL_NO_INLINE_ERROR
 #  ifdef error_at_line
-/* Only gcc ≥ 4.7 has __builtin_va_arg_pack.  */
+/* Only gcc >= 4.7 has __builtin_va_arg_pack.  */
 #   if _GL_GNUC_PREREQ (4, 7)
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wattributes"

@@ -3890,7 +3890,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     free (result);
   }
 
-  /* On Android ≥ 5.0, the default locale is the "C.UTF-8" locale, not the
+  /* On Android >= 5.0, the default locale is the "C.UTF-8" locale, not the
      "C" locale.  Furthermore, when you attempt to set the "C" or "POSIX"
      locale via setlocale(), what you get is a "C" locale with UTF-8 encoding,
      that is, effectively the "C.UTF-8" locale.  */
@@ -4115,7 +4115,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     free (result);
   }
 
-  /* On Android ≥ 5.0, the default locale is the "C.UTF-8" locale, not the
+  /* On Android >= 5.0, the default locale is the "C.UTF-8" locale, not the
      "C" locale.  Furthermore, when you attempt to set the "C" or "POSIX"
      locale via setlocale(), what you get is a "C" locale with UTF-8 encoding,
      that is, effectively the "C.UTF-8" locale.  */

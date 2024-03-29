@@ -223,7 +223,7 @@ template <int w>
 /* _GL_STATIC_ASSERT_H is defined if this code is copied into assert.h.  */
 #ifdef _GL_STATIC_ASSERT_H
 /* Define _Static_assert if needed.  */
-/* With clang ≥ 3.8.0 in C++ mode, _Static_assert already works and accepts
+/* With clang >= 3.8.0 in C++ mode, _Static_assert already works and accepts
    1 or 2 arguments.  We better don't override it, because clang's standard
    C++ library uses static_assert inside classes in several places, and our
    replacement via _GL_VERIFY does not work in these contexts.  */

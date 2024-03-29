@@ -381,7 +381,7 @@ AC_DEFUN([gl_COMMON_BODY], [
    in C++ also: class.  */
 /* In C++ and C23, this is spelled [[__maybe_unused__]].
    GCC's syntax is __attribute__ ((__unused__)).
-   clang supports both syntaxes.  Except that with clang ≥ 6, < 10, in C++ mode,
+   clang supports both syntaxes.  Except that with clang >= 6, < 10, in C++ mode,
    __has_c_attribute (__maybe_unused__) yields true but the use of
    [[__maybe_unused__]] nevertheless produces a warning.  */
 #ifndef _GL_ATTRIBUTE_MAYBE_UNUSED

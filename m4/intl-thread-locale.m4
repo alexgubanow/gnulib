@@ -38,7 +38,7 @@ AC_DEFUN([gt_INTL_THREAD_LOCALE_NAME],
   dnl they did not think about the programs.
   dnl In this situation, even the HAVE_NAMELESS_LOCALES support does not work.
   dnl So, define HAVE_FAKE_LOCALES and disable all locale_t support.
-  dnl Expected result: HAVE_FAKE_LOCALES is defined on OpenBSD ≥ 6.2.
+  dnl Expected result: HAVE_FAKE_LOCALES is defined on OpenBSD >= 6.2.
   case "$gt_cv_func_uselocale_works" in
     *yes)
       AC_CHECK_HEADERS_ONCE([xlocale.h])
@@ -82,7 +82,7 @@ int main ()
       ;;
   esac
 
-  dnl Expected result: HAVE_SOLARIS114_LOCALES is defined on Solaris ≥ 11.4.
+  dnl Expected result: HAVE_SOLARIS114_LOCALES is defined on Solaris >= 11.4.
   case "$gt_cv_func_uselocale_works" in
     *yes)
       AC_CACHE_CHECK([for Solaris 11.4 locale system],
@@ -131,7 +131,7 @@ int main ()
   dnl which is a problem for GNU libunistring.  Therefore try hard to avoid
   dnl enabling this code!
   dnl Expected result: HAVE_NAMELESS_LOCALES is defined on AIX,
-  dnl and              HAVE_AIX72_LOCALES is defined on AIX ≥ 7.2.
+  dnl and              HAVE_AIX72_LOCALES is defined on AIX >= 7.2.
   gt_nameless_locales=no
   case "$host_os" in
     dnl It's needed on AIX 7.2.
@@ -139,7 +139,7 @@ int main ()
       gt_nameless_locales=yes
       AC_DEFINE([HAVE_NAMELESS_LOCALES], [1],
         [Define if the locale_t type does not contain the name of each locale category.])
-      dnl In AIX ≥ 7.2, a locale contains at least the name of the LC_MESSSAGES
+      dnl In AIX >= 7.2, a locale contains at least the name of the LC_MESSSAGES
       dnl category (fix of defect 823926).
       AC_CACHE_CHECK([for AIX locales with LC_MESSAGES name],
         [gt_cv_locale_aix72],
@@ -179,7 +179,7 @@ int main ()
   dnl overrides newlocale(), duplocale(), freelocale() to keep track of locale
   dnl names.
   dnl Expected result: LOCALENAME_ENHANCE_LOCALE_FUNCS is defined on
-  dnl AIX 7.1, AIX ≥ 7.3.
+  dnl AIX 7.1, AIX >= 7.3.
   if test $gt_good_uselocale = yes && test $gt_nameless_locales = yes; then
     gt_localename_enhances_locale_funcs=yes
     LOCALENAME_ENHANCE_LOCALE_FUNCS=1

@@ -72,7 +72,7 @@ struct sm3_ctx
   uint32_t state[8];
 
   uint32_t total[2];
-  size_t buflen;       /* ≥ 0, ≤ 128 */
+  size_t buflen;       /* >= 0, ≤ 128 */
   uint32_t buffer[32]; /* 128 bytes; the first buflen bytes are in use */
 };
 

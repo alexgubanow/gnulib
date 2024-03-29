@@ -40,7 +40,7 @@ main (int argc, char *argv[])
   ASSERT (btowc (EOF) == WEOF);
 
 #ifdef __ANDROID__
-  /* On Android ≥ 5.0, the default locale is the "C.UTF-8" locale, not the
+  /* On Android >= 5.0, the default locale is the "C.UTF-8" locale, not the
      "C" locale.  Furthermore, when you attempt to set the "C" or "POSIX"
      locale via setlocale(), what you get is a "C" locale with UTF-8 encoding,
      that is, effectively the "C.UTF-8" locale.  */
