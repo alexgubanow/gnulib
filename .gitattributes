@@ -13,4 +13,13 @@ ChangeLog	merge=merge-changelog
 
 # Run this to make 'git diff' on .m4 files give nicer hunk context:
 #   git config diff.m4.xfuncname '^((AC_DEFUN|m4_define)[^,)]*)'
-*.m4	diff=m4
+*.m4 text !eol zos-working-tree-encoding=IBM-1047	diff=m4
+*.mak text !eol zos-working-tree-encoding=IBM-1047
+*.py text !eol zos-working-tree-encoding=UTF-8 diff=python
+Makefile text !eol zos-working-tree-encoding=IBM-1047
+*.c text !eol zos-working-tree-encoding=UTF-8 diff=cpp
+*.cc text !eol zos-working-tree-encoding=UTF-8 diff=cpp
+*.cpp text !eol zos-working-tree-encoding=UTF-8 diff=cpp
+*.h text !eol zos-working-tree-encoding=UTF-8 diff=cpp
+*.sh text eol=lf
+*.sed text eol=lf
