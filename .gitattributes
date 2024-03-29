@@ -17,7 +17,6 @@ ChangeLog	merge=merge-changelog
 *.mak text !eol zos-working-tree-encoding=IBM-1047
 *.py text !eol zos-working-tree-encoding=UTF-8 diff=python
 Makefile text !eol zos-working-tree-encoding=IBM-1047
-doc/Makefile text !eol zos-working-tree-encoding=IBM-1047
 ChangeLog text !eol zos-working-tree-encoding=UTF-8
 NEWS text !eol zos-working-tree-encoding=UTF-8
 doc/INSTALL* text !eol zos-working-tree-encoding=UTF-8
@@ -28,3 +27,8 @@ doc/INSTALL* text !eol zos-working-tree-encoding=UTF-8
 *.class text !eol zos-working-tree-encoding=UTF-8 diff=java
 *.sh text eol=lf zos-working-tree-encoding=UTF-8
 *.sed text eol=lf
+#files below has to have utf-8 character, no idea how to solve it now
+doc/Makefile text !eol zos-working-tree-encoding=UTF-8
+tests/uninorm/NormalizationTest.txt text !eol zos-working-tree-encoding=UTF-8
+tests/testlocale/fr/LC_MESSAGES/test-quotearg.mo text !eol zos-working-tree-encoding=UTF-8
+modules/uniname/uniname text !eol zos-working-tree-encoding=UTF-8
