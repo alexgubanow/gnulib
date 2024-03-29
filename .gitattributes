@@ -17,9 +17,13 @@ ChangeLog	merge=merge-changelog
 *.mak text !eol zos-working-tree-encoding=IBM-1047
 *.py text !eol zos-working-tree-encoding=UTF-8 diff=python
 Makefile text !eol zos-working-tree-encoding=IBM-1047
+Changelog text !eol zos-working-tree-encoding=UTF-8
+NEWS text !eol zos-working-tree-encoding=UTF-8
+doc/INSTALL* text !eol zos-working-tree-encoding=UTF-8
 *.c text !eol zos-working-tree-encoding=UTF-8 diff=cpp
 *.cc text !eol zos-working-tree-encoding=UTF-8 diff=cpp
 *.cpp text !eol zos-working-tree-encoding=UTF-8 diff=cpp
 *.h text !eol zos-working-tree-encoding=UTF-8 diff=cpp
-*.sh text eol=lf
+*.class text !eol zos-working-tree-encoding=UTF-8 diff=java
+*.sh text eol=lf zos-working-tree-encoding=UTF-8
 *.sed text eol=lf
