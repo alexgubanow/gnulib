@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2023 Free Software Foundation, Inc.
+# Copyright (C) 2002-2024 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,19 +16,21 @@
 '''An easy access to pygnulib constants.'''
 
 from __future__ import unicode_literals
+from __future__ import annotations
+
 #===============================================================================
 # Define global imports
 #===============================================================================
 import re
 import os
 import sys
+import stat
 import platform
 import shutil
 import tempfile
 import codecs
 import subprocess as sp
 import __main__ as interpreter
-
 
 #===============================================================================
 # Define module information
@@ -42,7 +44,7 @@ __author__ = \
         'Dmitry Selyutin',
     ]
 __license__ = 'GNU GPLv3+'
-__copyright__ = '2002-2022 Free Software Foundation, Inc.'
+__copyright__ = '2002-2024 Free Software Foundation, Inc.'
 
 
 #===============================================================================
@@ -72,23 +74,23 @@ if ENCS['shell'] == None:
     ENCS['shell'] = 'UTF-8'
 
 # Set APP dictionary
-APP['name'] = sys.argv[0]
-if not APP['name']:
-    APP['name'] = 'gnulib-tool.py'
-APP['path'] = os.path.realpath(sys.argv[0])
+APP['path'] = os.path.realpath(sys.argv[0])                 # file name of <gnulib>/pygnulib/main.py
+APP['root'] = os.path.dirname(os.path.dirname(APP['path'])) # file name of <gnulib>
+APP['name'] = os.path.join(APP['root'], 'gnulib-tool.py')
 
-# Set DIRS dictionary
-DIRS['root'] = os.path.dirname(APP['path'])
+# Set DIRS directory
 DIRS['cwd'] = os.getcwd()
-DIRS['build-aux'] = os.path.join(DIRS['root'], 'build-aux')
-DIRS['config'] = os.path.join(DIRS['root'], 'config')
-DIRS['doc'] = os.path.join(DIRS['root'], 'doc')
-DIRS['lib'] = os.path.join(DIRS['root'], 'lib')
-DIRS['m4'] = os.path.join(DIRS['root'], 'm4')
-DIRS['modules'] = os.path.join(DIRS['root'], 'modules')
-DIRS['tests'] = os.path.join(DIRS['root'], 'tests')
-DIRS['git'] = os.path.join(DIRS['root'], '.git')
-DIRS['cvs'] = os.path.join(DIRS['root'], 'CVS')
+def init_DIRS(gnulib_dir: str) -> None:
+    DIRS['root'] = gnulib_dir
+    DIRS['build-aux'] = os.path.join(gnulib_dir, 'build-aux')
+    DIRS['config'] = os.path.join(gnulib_dir, 'config')
+    DIRS['doc'] = os.path.join(gnulib_dir, 'doc')
+    DIRS['lib'] = os.path.join(gnulib_dir, 'lib')
+    DIRS['m4'] = os.path.join(gnulib_dir, 'm4')
+    DIRS['modules'] = os.path.join(gnulib_dir, 'modules')
+    DIRS['tests'] = os.path.join(gnulib_dir, 'tests')
+    DIRS['git'] = os.path.join(gnulib_dir, '.git')
+    DIRS['cvs'] = os.path.join(gnulib_dir, 'CVS')
 
 # Set MODES dictionary
 MODES = \
@@ -122,12 +124,12 @@ TESTS = \
     }
 
 # Define AUTOCONF minimum version
-DEFAULT_AUTOCONF_MINVERSION = 2.59
-# You can set AUTOCONFPATH to empty if autoconf 2.57 is already in your PATH
+DEFAULT_AUTOCONF_MINVERSION = 2.64
+# You can set AUTOCONFPATH to empty if autoconf ≥ 2.64 is already in your PATH
 AUTOCONFPATH = ''
-# You can set AUTOMAKEPATH to empty if automake 1.9.x is already in your PATH
+# You can set AUTOMAKEPATH to empty if automake ≥ 1.14 is already in your PATH
 AUTOMAKEPATH = ''
-# You can set GETTEXTPATH to empty if autopoint 0.15 is already in your PATH
+# You can set GETTEXTPATH to empty if autopoint ≥ 0.15 is already in your PATH
 GETTEXTPATH = ''
 # You can set LIBTOOLPATH to empty if libtoolize 2.x is already in your PATH
 LIBTOOLPATH = ''
@@ -205,10 +207,19 @@ else:
 #===============================================================================
 # Define global functions
 #===============================================================================
-def execute(args, verbose):
+
+def force_output() -> None:
+    '''This function is to be invoked before invoking external programs.
+    It initiates bringing the the contents of process-internal output buffers
+    to their respective destinations.'''
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+
+def execute(args: list[str], verbose: int) -> None:
     '''Execute the given shell command.'''
     if verbose >= 0:
-        print("executing %s" % ' '.join(args))
+        print("executing %s" % ' '.join(args), flush=True)
         try:  # Try to run
             retcode = sp.call(args)
         except Exception as error:
@@ -235,7 +246,7 @@ def execute(args, verbose):
             sys.exit(retcode)
 
 
-def cleaner(sequence):
+def cleaner(sequence: str | list[str]) -> str | list[str | bool]:
     '''Clean string or list of strings after using regex.'''
     if type(sequence) is str:
         sequence = sequence.replace('[', '')
@@ -250,14 +261,13 @@ def cleaner(sequence):
         sequence = [ True if value == 'true' else value
                      for value in sequence ]
         sequence = [ value.strip()
+                     if type(value) is str else value
                      for value in sequence ]
     return sequence
 
 
-def joinpath(head, *tail):
-    '''joinpath(head, *tail) -> str
-
-    Join two or more pathname components, inserting '/' as needed. If any
+def joinpath(head: str, *tail: str) -> str:
+    '''Join two or more pathname components, inserting '/' as needed. If any
     component is an absolute path, all previous path components will be
     discarded.'''
     newtail = list()
@@ -267,7 +277,7 @@ def joinpath(head, *tail):
     return result
 
 
-def relativize(dir1, dir2):
+def relativize(dir1: str, dir2: str) -> str:
     '''Compute a relative pathname reldir such that dir1/reldir = dir2.
     dir1 and dir2 must be relative pathnames.'''
     dir0 = os.getcwd()
@@ -292,14 +302,22 @@ def relativize(dir1, dir2):
     return result
 
 
-def relconcat(dir1, dir2):
+def relconcat(dir1: str, dir2: str) -> str:
     '''Compute a relative pathname dir1/dir2, with obvious simplifications.
     dir1 and dir2 must be relative pathnames.
     dir2 is considered to be relative to dir1.'''
     return os.path.normpath(os.path.join(dir1, dir2))
 
 
-def relinverse(dir):
+def ensure_writable(dest: str) -> None:
+    '''Ensure that the file dest is writable.'''
+    # os.stat throws FileNotFoundError error but we assume it exists.
+    st = os.stat(dest)
+    if not (st.st_mode & stat.S_IWUSR):
+        os.chmod(dest, st.st_mode | stat.S_IWUSR)
+
+
+def relinverse(dir: str) -> str:
     '''Compute the inverse of dir. Namely, a relative pathname consisting only
     of '..' components, such that dir/relinverse = '.'.
     dir must be a relative pathname.'''
@@ -314,7 +332,7 @@ def relinverse(dir):
         return os.path.normpath(inverse)
 
 
-def copyfile(src, dest):
+def copyfile(src: str, dest: str) -> None:
     '''Copy file src to file dest. Like shutil.copy, but ignore errors e.g. on
     VFAT file systems.'''
     shutil.copyfile(src, dest)
@@ -324,7 +342,7 @@ def copyfile(src, dest):
         pass
 
 
-def copyfile2(src, dest):
+def copyfile2(src: str, dest: str) -> None:
     '''Copy file src to file dest, preserving modification time. Like
     shutil.copy2, but ignore errors e.g. on VFAT file systems. This function
     is to be used for backup files.'''
@@ -335,7 +353,7 @@ def copyfile2(src, dest):
         pass
 
 
-def movefile(src, dest):
+def movefile(src: str, dest: str) -> None:
     '''Move/rename file src to file dest. Like shutil.move, but gracefully
     handle common errors.'''
     try:
@@ -348,7 +366,7 @@ def movefile(src, dest):
         os.remove(src)
 
 
-def symlink_relative(src, dest):
+def symlink_relative(src: str, dest: str) -> None:
     '''Like ln -s, except use cp -p if ln -s fails.
     src is either absolute or relative to the directory of dest.'''
     try:
@@ -366,9 +384,10 @@ def symlink_relative(src, dest):
             else:
                 cp_src = src
         copyfile2(cp_src, dest)
+        ensure_writable(dest)
 
 
-def as_link_value_at_dest(src, dest):
+def as_link_value_at_dest(src: str, dest: str) -> str:
     '''Compute the symbolic link value to place at dest, such that the
     resulting symbolic link points to src. src is given relative to the
     current directory (or absolute).'''
@@ -389,7 +408,7 @@ def as_link_value_at_dest(src, dest):
             return relativize(destdir, src)
 
 
-def link_relative(src, dest):
+def link_relative(src: str, dest: str) -> None:
     '''Like ln -s, except that src is given relative to the current directory
     (or absolute), not given relative to the directory of dest.'''
     if type(src) is not str:
@@ -400,7 +419,7 @@ def link_relative(src, dest):
     symlink_relative(link_value, dest)
 
 
-def link_if_changed(src, dest):
+def link_if_changed(src: str, dest: str) -> None:
     '''Create a symlink, but avoids munging timestamps if the link is correct.'''
     link_value = as_link_value_at_dest(src, dest)
     if not (os.path.islink(dest) and os.readlink(dest) == link_value):
@@ -412,28 +431,61 @@ def link_if_changed(src, dest):
         symlink_relative(link_value, dest)
 
 
-def filter_filelist(separator, filelist,
-                    prefix, suffix, removed_prefix, removed_suffix,
-                    added_prefix='', added_suffix=''):
-    '''filter_filelist(*args) -> list
+def hardlink(src: str, dest: str) -> None:
+    '''Like ln, except use cp -p if ln fails.
+    src is either absolute or relative to the directory of dest.'''
+    try:
+        os.link(src, dest)
+    except PermissionError:
+        sys.stderr.write('%s: ln failed; falling back on cp -p\n' % APP['name'])
+        if src.startswith('/') or (len(src) >= 2 and src[1] == ':'):
+            # src is absolute.
+            cp_src = src
+        else:
+            # src is relative to the directory of dest.
+            last_slash = dest.rfind('/')
+            if last_slash >= 0:
+                cp_src = joinpath(dest[0: last_slash - 1], src)
+            else:
+                cp_src = src
+        copyfile2(cp_src, dest)
+        ensure_writable(dest)
 
-    Filter the given list of files. Filtering: Only the elements starting with
+
+def filter_filelist(separator: str, filelist: str, prefix: str, suffix: str,
+                    removed_prefix: str, removed_suffix: str,
+                    added_prefix: str = '', added_suffix: str = '') -> str:
+    '''Filter the given list of files. Filtering: Only the elements starting with
     prefix and ending with suffix are considered. Processing: removed_prefix
     and removed_suffix are removed from each element, added_prefix and
     added_suffix are added to each element.'''
     listing = list()
     for filename in filelist:
         if filename.startswith(prefix) and filename.endswith(suffix):
-            pattern = re.compile('^%s(.*)%s$'
+            pattern = re.compile(r'^%s(.*)%s$'
                                  % (removed_prefix, removed_suffix))
-            result = pattern.sub('%s\\1%s'
+            result = pattern.sub(r'%s\1%s'
                                  % (added_prefix, added_suffix), filename)
             listing += [result]
-    result = separator.join(listing)
+    # Return an empty string if no files were matched, else combine them
+    # with the given separator.
+    if listing:
+        result = separator.join(listing)
+    else:
+        result = ''
     return result
 
 
-def substart(orig, repl, data):
+def lines_to_multiline(lines: list[str]) -> str:
+    '''Combine the lines to a single string, terminating each line with a
+    newline character.'''
+    if len(lines) > 0:
+        return '\n'.join(lines) + '\n'
+    else:
+        return ''
+
+
+def substart(orig: str, repl: str, data: str) -> str:
     '''Replaces the start portion of a string.
 
     Returns data with orig replaced by repl, but only at the beginning of data.
@@ -444,7 +496,7 @@ def substart(orig, repl, data):
     return result
 
 
-def subend(orig, repl, data):
+def subend(orig: str, repl: str, data: str) -> str:
     '''Replaces the end portion of a string.
 
     Returns data with orig replaced by repl, but only at the end of data.
@@ -455,7 +507,7 @@ def subend(orig, repl, data):
     return result
 
 
-def nlconvert(text):
+def nlconvert(text: str) -> str:
     '''Convert line-endings to specific for this platform.'''
     system = platform.system().lower()
     text = text.replace('\r\n', '\n')
@@ -464,19 +516,7 @@ def nlconvert(text):
     return text
 
 
-def nlremove(text):
-    '''Remove empty lines from the source text.'''
-    text = nlconvert(text)
-    text = text.replace('\r\n', '\n')
-    lines = [ line
-              for line in text.split('\n')
-              if line != '' ]
-    text = '\n'.join(lines)
-    text = nlconvert(text)
-    return text
-
-
-def remove_trailing_slashes(text):
+def remove_trailing_slashes(text: str) -> str:
     '''Remove trailing slashes from a file name, except when the file name
     consists only of slashes.'''
     result = text
@@ -488,21 +528,21 @@ def remove_trailing_slashes(text):
     return result
 
 
-def remove_backslash_newline(text):
+def remove_backslash_newline(text: str) -> str:
     '''Given a multiline string text, join lines:
     When a line ends in a backslash, remove the backslash and join the next
     line to it.'''
     return text.replace('\\\n', '')
 
 
-def combine_lines(text):
+def combine_lines(text: str) -> str:
     '''Given a multiline string text, join lines by spaces:
     When a line ends in a backslash, remove the backslash and join the next
     line to it, inserting a space between them.'''
     return text.replace('\\\n', ' ')
 
 
-def combine_lines_matching(pattern, text):
+def combine_lines_matching(pattern: re.Pattern, text: str) -> str:
     '''Given a multiline string text, join lines by spaces, when the first
     such line matches a given RegexObject pattern.
     When a line that matches the pattern ends in a backslash, remove the

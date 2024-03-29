@@ -1,5 +1,5 @@
 /* Test of POSIX compatible vsnprintf() and snprintf() functions.
-   Copyright (C) 2007-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #include "minus-zero.h"
 #include "infinity.h"
 #include "nan.h"
+#include "snan.h"
 
 /* The SGI MIPS floating-point format does not distinguish 0.0 and -0.0.  */
 static int
@@ -195,6 +196,16 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
             && strcmp (result + strlen (result) - 3, " 33") == 0);
     ASSERT (retval == strlen (result));
   }
+#if HAVE_SNAND
+  { /* Signalling NaN.  */
+    int retval =
+      my_snprintf (result, sizeof (result), "%a %d", SNaNd (), 33, 44, 55);
+    ASSERT (strlen (result) >= 3 + 3
+            && strisnan (result, 0, strlen (result) - 3, 0)
+            && strcmp (result + strlen (result) - 3, " 33") == 0);
+    ASSERT (retval == strlen (result));
+  }
+#endif
 
   { /* Rounding near the decimal point.  */
     int retval =
@@ -456,10 +467,20 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
             && strcmp (result + strlen (result) - 3, " 33") == 0);
     ASSERT (retval == strlen (result));
   }
+#if HAVE_SNANL
+  { /* Signalling NaN.  */
+    int retval =
+      my_snprintf (result, sizeof (result), "%La %d", SNaNl (), 33, 44, 55);
+    ASSERT (strlen (result) >= 3 + 3
+            && strisnan (result, 0, strlen (result) - 3, 0)
+            && strcmp (result + strlen (result) - 3, " 33") == 0);
+    ASSERT (retval == strlen (result));
+  }
+#endif
 #if CHECK_PRINTF_SAFE && ((defined __ia64 && LDBL_MANT_DIG == 64) || (defined __x86_64__ || defined __amd64__) || (defined __i386 || defined __i386__ || defined _I386 || defined _M_IX86 || defined _X86_)) && !HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
   { /* Quiet NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%La %d", x.value, 33, 44, 55);
     ASSERT (strlen (result) >= 3 + 3
@@ -470,7 +491,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   {
     /* Signalling NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%La %d", x.value, 33, 44, 55);
     ASSERT (strlen (result) >= 3 + 3
@@ -481,7 +502,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   /* snprintf should print something for noncanonical values.  */
   { /* Pseudo-NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%La %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -489,7 +510,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Infinity.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%La %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -497,7 +518,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Zero.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%La %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -505,7 +526,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Unnormalized number.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%La %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -513,7 +534,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Denormal.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%La %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -873,6 +894,16 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
             && strcmp (result + strlen (result) - 3, " 33") == 0);
     ASSERT (retval == strlen (result));
   }
+#if HAVE_SNAND
+  { /* Signalling NaN.  */
+    int retval =
+      my_snprintf (result, sizeof (result), "%f %d", SNaNd (), 33, 44, 55);
+    ASSERT (strlen (result) >= 3 + 3
+            && strisnan (result, 0, strlen (result) - 3, 0)
+            && strcmp (result + strlen (result) - 3, " 33") == 0);
+    ASSERT (retval == strlen (result));
+  }
+#endif
 
   { /* Width.  */
     int retval =
@@ -1123,10 +1154,20 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
             && strcmp (result + strlen (result) - 3, " 33") == 0);
     ASSERT (retval == strlen (result));
   }
+#if HAVE_SNANL
+  { /* Signalling NaN.  */
+    int retval =
+      my_snprintf (result, sizeof (result), "%Lf %d", SNaNl (), 33, 44, 55);
+    ASSERT (strlen (result) >= 3 + 3
+            && strisnan (result, 0, strlen (result) - 3, 0)
+            && strcmp (result + strlen (result) - 3, " 33") == 0);
+    ASSERT (retval == strlen (result));
+  }
+#endif
 #if CHECK_PRINTF_SAFE && ((defined __ia64 && LDBL_MANT_DIG == 64) || (defined __x86_64__ || defined __amd64__) || (defined __i386 || defined __i386__ || defined _I386 || defined _M_IX86 || defined _X86_)) && !HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
   { /* Quiet NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lf %d", x.value, 33, 44, 55);
     ASSERT (strlen (result) >= 3 + 3
@@ -1137,7 +1178,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   {
     /* Signalling NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lf %d", x.value, 33, 44, 55);
     ASSERT (strlen (result) >= 3 + 3
@@ -1148,7 +1189,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   /* snprintf should print something for noncanonical values.  */
   { /* Pseudo-NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lf %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -1156,7 +1197,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Infinity.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lf %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -1164,7 +1205,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Zero.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lf %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -1172,7 +1213,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Unnormalized number.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lf %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -1180,7 +1221,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Denormal.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lf %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -1351,6 +1392,16 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
             && strcmp (result + strlen (result) - 3, " 33") == 0);
     ASSERT (retval == strlen (result));
   }
+#if HAVE_SNAND
+  { /* Signalling NaN.  */
+    int retval =
+      my_snprintf (result, sizeof (result), "%F %d", SNaNd (), 33, 44, 55);
+    ASSERT (strlen (result) >= 3 + 3
+            && strisnan (result, 0, strlen (result) - 3, 1)
+            && strcmp (result + strlen (result) - 3, " 33") == 0);
+    ASSERT (retval == strlen (result));
+  }
+#endif
 
   { /* FLAG_ZERO.  */
     int retval =
@@ -1448,6 +1499,16 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
             && strcmp (result + strlen (result) - 3, " 33") == 0);
     ASSERT (retval == strlen (result));
   }
+#if HAVE_SNANL
+  { /* Signalling NaN.  */
+    int retval =
+      my_snprintf (result, sizeof (result), "%LF %d", SNaNl (), 33, 44, 55);
+    ASSERT (strlen (result) >= 3 + 3
+            && strisnan (result, 0, strlen (result) - 3, 1)
+            && strcmp (result + strlen (result) - 3, " 33") == 0);
+    ASSERT (retval == strlen (result));
+  }
+#endif
 
   { /* FLAG_ZERO.  */
     int retval =
@@ -1648,6 +1709,16 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
             && strcmp (result + strlen (result) - 3, " 33") == 0);
     ASSERT (retval == strlen (result));
   }
+#if HAVE_SNAND
+  { /* Signalling NaN.  */
+    int retval =
+      my_snprintf (result, sizeof (result), "%e %d", SNaNd (), 33, 44, 55);
+    ASSERT (strlen (result) >= 3 + 3
+            && strisnan (result, 0, strlen (result) - 3, 0)
+            && strcmp (result + strlen (result) - 3, " 33") == 0);
+    ASSERT (retval == strlen (result));
+  }
+#endif
 
   { /* Width.  */
     int retval =
@@ -1931,10 +2002,20 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
             && strcmp (result + strlen (result) - 3, " 33") == 0);
     ASSERT (retval == strlen (result));
   }
+#if HAVE_SNANL
+  { /* Signalling NaN.  */
+    int retval =
+      my_snprintf (result, sizeof (result), "%Le %d", SNaNl (), 33, 44, 55);
+    ASSERT (strlen (result) >= 3 + 3
+            && strisnan (result, 0, strlen (result) - 3, 0)
+            && strcmp (result + strlen (result) - 3, " 33") == 0);
+    ASSERT (retval == strlen (result));
+  }
+#endif
 #if CHECK_PRINTF_SAFE && ((defined __ia64 && LDBL_MANT_DIG == 64) || (defined __x86_64__ || defined __amd64__) || (defined __i386 || defined __i386__ || defined _I386 || defined _M_IX86 || defined _X86_)) && !HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
   { /* Quiet NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Le %d", x.value, 33, 44, 55);
     ASSERT (strlen (result) >= 3 + 3
@@ -1945,7 +2026,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   {
     /* Signalling NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Le %d", x.value, 33, 44, 55);
     ASSERT (strlen (result) >= 3 + 3
@@ -1956,7 +2037,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   /* snprintf should print something for noncanonical values.  */
   { /* Pseudo-NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Le %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -1964,7 +2045,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Infinity.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Le %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -1972,7 +2053,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Zero.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Le %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -1980,7 +2061,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Unnormalized number.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Le %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -1988,7 +2069,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Denormal.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Le %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -2277,6 +2358,16 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
             && strcmp (result + strlen (result) - 3, " 33") == 0);
     ASSERT (retval == strlen (result));
   }
+#if HAVE_SNAND
+  { /* Signalling NaN.  */
+    int retval =
+      my_snprintf (result, sizeof (result), "%g %d", SNaNd (), 33, 44, 55);
+    ASSERT (strlen (result) >= 3 + 3
+            && strisnan (result, 0, strlen (result) - 3, 0)
+            && strcmp (result + strlen (result) - 3, " 33") == 0);
+    ASSERT (retval == strlen (result));
+  }
+#endif
 
   { /* Width.  */
     int retval =
@@ -2546,10 +2637,20 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
             && strcmp (result + strlen (result) - 3, " 33") == 0);
     ASSERT (retval == strlen (result));
   }
+#if HAVE_SNANL
+  { /* Signalling NaN.  */
+    int retval =
+      my_snprintf (result, sizeof (result), "%Lg %d", SNaNl (), 33, 44, 55);
+    ASSERT (strlen (result) >= 3 + 3
+            && strisnan (result, 0, strlen (result) - 3, 0)
+            && strcmp (result + strlen (result) - 3, " 33") == 0);
+    ASSERT (retval == strlen (result));
+  }
+#endif
 #if CHECK_PRINTF_SAFE && ((defined __ia64 && LDBL_MANT_DIG == 64) || (defined __x86_64__ || defined __amd64__) || (defined __i386 || defined __i386__ || defined _I386 || defined _M_IX86 || defined _X86_)) && !HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
   { /* Quiet NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lg %d", x.value, 33, 44, 55);
     ASSERT (strlen (result) >= 3 + 3
@@ -2560,7 +2661,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   {
     /* Signalling NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lg %d", x.value, 33, 44, 55);
     ASSERT (strlen (result) >= 3 + 3
@@ -2571,7 +2672,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   /* snprintf should print something for noncanonical values.  */
   { /* Pseudo-NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lg %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -2579,7 +2680,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Infinity.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lg %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -2587,7 +2688,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Zero.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lg %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -2595,7 +2696,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Unnormalized number.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lg %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -2603,7 +2704,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
   }
   { /* Pseudo-Denormal.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
     int retval =
       my_snprintf (result, sizeof (result), "%Lg %d", x.value, 33, 44, 55);
     ASSERT (retval == strlen (result));
@@ -2721,6 +2822,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
     ASSERT (retval == strlen (result));
   }
 
+#if NEED_PRINTF_WITH_N_DIRECTIVE
   /* Test the support of the %n format directive.  */
 
   {
@@ -2731,6 +2833,7 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
     ASSERT (retval == strlen (result));
     ASSERT (count == 4);
   }
+#endif
 
   /* Test the support of the POSIX/XSI format strings with positions.  */
 
@@ -3083,11 +3186,14 @@ test_function (int (*my_snprintf) (char *, size_t, const char *, ...))
     int retval =
       my_snprintf (result, sizeof (result),
                    "a%lcz %d", (wint_t) L'\0', 33, 44, 55);
-    /* No NUL byte between 'a' and 'z'.  This is surprising, but is a
-       consequence of how POSIX:2018 and ISO C 23 specify the handling
-       of %lc.  */
-    ASSERT (memcmp (result, "az 33\0", 5 + 1) == 0);
-    ASSERT (retval == 5);
+    /* ISO C had this wrong for decades.  ISO C 23 now corrects it, through
+       this wording:
+       "If an l length modifier is present, the wint_t argument is converted
+        as if by a call to the wcrtomb function with a pointer to storage of
+        at least MB_CUR_MAX bytes, the wint_t argument converted to wchar_t,
+        and an initial shift state."  */
+    ASSERT (memcmp (result, "a\0z 33\0", 6 + 1) == 0);
+    ASSERT (retval == 6);
   }
 
   static wint_t L_invalid = (wchar_t) 0x76543210;

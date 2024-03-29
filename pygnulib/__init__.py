@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2023 Free Software Foundation, Inc.
+# Copyright (C) 2002-2024 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,6 +30,6 @@ coding standards, the GNU maintainer information, the GPL and other licenses (in
 Texinfo), assorted configuration scripts, and more. The goal is to provide all
 the common infrastructure needed by GNU packages.'''
 
-__copyright__ = '2012-2022 Free Software Foundation, Inc.'
+__copyright__ = '2012-2024 Free Software Foundation, Inc.'
 __author__ = 'Dmitry Selyutin'
 __license__ = 'GNU GPLv3+'

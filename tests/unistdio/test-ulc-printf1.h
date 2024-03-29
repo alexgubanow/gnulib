@@ -1,5 +1,5 @@
 /* Test of ulc_v[a]s[n]printf() functions.
-   Copyright (C) 2007, 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007, 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -670,10 +670,14 @@ test_xfunction (char * (*my_xasprintf) (const char *, ...))
     int count = -1;
     char *result =
       my_xasprintf ("%d %n", 123, &count, 33, 44, 55);
+#if NEED_PRINTF_WITH_N_DIRECTIVE
     ASSERT (result != NULL);
     ASSERT (strcmp (result, "123 ") == 0);
     ASSERT (count == 4);
     free (result);
+#else
+    ASSERT (result == NULL);
+#endif
   }
 
   /* Test the support of the POSIX/XSI format strings with positions.  */

@@ -1,5 +1,5 @@
 /* Self tests for base64.
-   Copyright (C) 2004, 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2008-2024 Free Software Foundation, Inc.
    Written by Simon Josefsson.
 
    This program is free software: you can redistribute it and/or modify
@@ -231,6 +231,15 @@ main (void)
   ASSERT (!ok);
 
   ok = base64_decode_alloc_ctx (NULL, "aax=X", 5, &p, &len);
+  ASSERT (!ok);
+
+  ok = base64_decode_alloc_ctx (NULL, "SGVsbG9=", 8, &p, &len);
+  ASSERT (!ok);
+
+  ok = base64_decode_alloc_ctx (NULL, "TR==", 4, &p, &len);
+  ASSERT (!ok);
+
+  ok = base64_decode_alloc_ctx (NULL, "TWF=TWE=", 8, &p, &len);
   ASSERT (!ok);
 
   return 0;

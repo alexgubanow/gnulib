@@ -1,5 +1,5 @@
-# serial 7   -*- Autoconf -*-
-# Copyright (C) 2006-2007, 2009-2023 Free Software Foundation, Inc.
+# serial 8   -*- Autoconf -*-
+# Copyright (C) 2006-2007, 2009-2024 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -27,10 +27,16 @@ AC_DEFUN([gl_HEADERS_SELINUX_SELINUX_H],
       gl_CHECK_NEXT_HEADERS([selinux/selinux.h])
       AC_DEFINE([getfilecon], [rpl_getfilecon],
                 [Always use our getfilecon wrapper.])
+      AC_DEFINE([getfilecon_raw], [rpl_getfilecon_raw],
+                [Always use our getfilecon_raw wrapper.])
       AC_DEFINE([lgetfilecon], [rpl_lgetfilecon],
                 [Always use our lgetfilecon wrapper.])
+      AC_DEFINE([lgetfilecon_raw], [rpl_lgetfilecon_raw],
+                [Always use our lgetfilecon_raw wrapper.])
       AC_DEFINE([fgetfilecon], [rpl_fgetfilecon],
                 [Always use our fgetfilecon wrapper.])
+      AC_DEFINE([fgetfilecon_raw], [rpl_fgetfilecon_raw],
+                [Always use our fgetfilecon_raw wrapper.])
     fi
 
     case "$ac_cv_search_setfilecon:$ac_cv_header_selinux_selinux_h" in
@@ -59,11 +65,11 @@ AC_DEFUN([gl_LIBSELINUX],
 
   LIB_SELINUX=
   if test "$with_selinux" != no; then
-    gl_save_LIBS=$LIBS
+    gl_saved_LIBS=$LIBS
     AC_SEARCH_LIBS([setfilecon], [selinux],
                    [test "$ac_cv_search_setfilecon" = "none required" ||
                     LIB_SELINUX=$ac_cv_search_setfilecon])
-    LIBS=$gl_save_LIBS
+    LIBS=$gl_saved_LIBS
   fi
   AC_SUBST([LIB_SELINUX])
 

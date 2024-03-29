@@ -1,5 +1,5 @@
 /* Name of system error code.
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -1123,7 +1123,7 @@ strerrorname_np (int errnum)
     #if defined ENOSHARE
     case ENOSHARE:        return "ENOSHARE";
     #endif
-    /* HP-UX, OSF/1 */
+    /* Linux, HP-UX, OSF/1 */
     #if defined ENOSYM
     case ENOSYM:          return "ENOSYM";
     #endif
@@ -1247,7 +1247,7 @@ strerrorname_np (int errnum)
     #if defined EREMOTEIO
     case EREMOTEIO:       return "EREMOTEIO";
     #endif
-    /* HP-UX */
+    /* Linux, HP-UX */
     #if defined EREMOTERELEASE
     case EREMOTERELEASE:  return "EREMOTERELEASE";
     #endif

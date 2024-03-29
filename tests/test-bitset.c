@@ -1,5 +1,5 @@
 /* Test of bitset.
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -274,7 +274,7 @@ check_zero (bitset bs)
   /* FOR_EACH.  */
   {
     bitset_iterator iter;
-    bitset_bindex i;
+    _GL_UNUSED bitset_bindex i;
     BITSET_FOR_EACH (iter, bs, i, 0)
       ASSERT (0);
     BITSET_FOR_EACH_REVERSE (iter, bs, i, 0)

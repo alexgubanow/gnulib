@@ -4,19 +4,18 @@ Read entire utmp file into memory.
 Files:
 lib/readutmp.h
 lib/readutmp.c
+lib/boot-time-aux.h
 m4/readutmp.m4
 m4/systemd.m4
 
 Depends-on:
 extensions
-fopen-gnu
 idx
 stat-time
 stdbool
 stdint
 strnlen
 time-h
-timespec_get
 unlocked-io-internal
 xalloc
 

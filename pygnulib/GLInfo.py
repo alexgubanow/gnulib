@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2023 Free Software Foundation, Inc.
+# Copyright (C) 2002-2024 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +12,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+from __future__ import annotations
 
 #===============================================================================
 # Define global imports
@@ -48,17 +50,17 @@ class GLInfo(object):
     anywhere else. The return values are not the same as for the module,
     but still depends on them.'''
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         '''x.__repr__ <==> repr(x)'''
         result = '<pygnulib.GLInfo %s>' % hex(id(self))
         return result
 
-    def package(self):
+    def package(self) -> str:
         '''Return formatted string which contains name of the package.'''
         result = 'GNU gnulib'
         return result
 
-    def authors(self):
+    def authors(self) -> str:
         '''Return formatted string which contains authors.
         The special __author__ variable is used (type is list).'''
         result = ''
@@ -69,23 +71,23 @@ class GLInfo(object):
                 result += '%s, ' % item
         return result
 
-    def license(self):
+    def license(self) -> str:
         '''Return formatted string which contains license and its description.'''
         result = 'License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>\n'
         result += 'This is free software: you are free to change and redistribute it.\n'
         result += 'There is NO WARRANTY, to the extent permitted by law.'
         return result
 
-    def copyright(self):
+    def copyright(self) -> str:
         '''Return formatted string which contains copyright.
         The special __copyright__ variable is used (type is str).'''
         copyright = __copyright__
         # Per the GNU Coding Standards, show only the last year.
-        copyright = re.compile('^[0-9]*-').sub('', copyright)
+        copyright = re.compile(r'^[0-9]*-').sub(r'', copyright)
         result = 'Copyright (C) %s' % copyright
         return result
 
-    def date(self):
+    def date(self) -> str:
         '''Return formatted string which contains date and time in GMT format.'''
         if isdir(DIRS['git']):
             have_git = None
@@ -102,14 +104,15 @@ class GLInfo(object):
                 except:
                     have_GNU_date = False
                 if have_GNU_date:
-                    args = ['git', 'log', '-n', '1', 'ChangeLog']
+                    args = ['git', 'log', '-n', '1', '--format=medium', '--date=iso', 'ChangeLog']
                     result = sp.check_output(args, cwd=DIRS['root']).decode("UTF-8")
-                    # Get date as "Fri Mar 21 07:16:51 2008 -0600" from string
-                    pattern = re.compile('^Date:[\t ]*(.*?)$', re.M)
-                    result = pattern.findall(result)[0]
-                    # Turn "Fri Mar 21 07:16:51 2008 -0600" into "Mar 21 2008 07:16:51 -0600"
-                    pattern = re.compile('^[^ ]* ([^ ]*) ([0-9]*) ([0-9:]*) ([0-9]*) ')
-                    result = pattern.sub('\\1 \\2 \\4 \\3 ', result)
+                    # Get date as "2008-03-21 07:16:51 -0600" from string
+                    pattern = re.compile(r'^Date:[\t ]*(.*?)$', re.M)
+                    result = pattern.findall(result)
+                    if (len(result) > 0):
+                        result = result[0]
+                    else:
+                        result = ''
                     # Use GNU date to compute the time in GMT
                     args = ['date', '-d', result, '-u', '+%Y-%m-%d %H:%M:%S']
                     proc = sp.check_output(args)
@@ -121,10 +124,14 @@ class GLInfo(object):
         with codecs.open(os.path.join(DIRS['root'], 'ChangeLog'), 'rb', 'UTF-8') as file:
             line = file.readline()
             first_changelog_line = line.rstrip()
-        result = re.compile(' .*').sub('', first_changelog_line)
+        result = re.compile(r' .*').sub(r'', first_changelog_line)
         return result
 
-    def usage(self):
+    def copyright_range(self) -> str:
+        '''Returns a formatted copyright string showing a year range.'''
+        return f'Copyright (C) {constants.__copyright__}'
+
+    def usage(self) -> str:
         '''Show help message.'''
         result = '''\
 Usage: gnulib-tool --list
@@ -144,10 +151,12 @@ Usage: gnulib-tool --list
        gnulib-tool --extract-applicability module
        gnulib-tool --extract-filelist module
        gnulib-tool --extract-dependencies module
+       gnulib-tool --extract-recursive-dependencies module
        gnulib-tool --extract-autoconf-snippet module
        gnulib-tool --extract-automake-snippet module
        gnulib-tool --extract-include-directive module
        gnulib-tool --extract-link-directive module
+       gnulib-tool --extract-recursive-link-directive module
        gnulib-tool --extract-license module
        gnulib-tool --extract-maintainer module
        gnulib-tool --extract-tests-module module
@@ -180,10 +189,16 @@ Operation modes:
       --extract-applicability      extract the applicability
       --extract-filelist           extract the list of files
       --extract-dependencies       extract the dependencies
+      --extract-recursive-dependencies  extract the dependencies of the module
+                                        and its dependencies, recursively, all
+                                        together, but without the conditions
       --extract-autoconf-snippet   extract the snippet for configure.ac
       --extract-automake-snippet   extract the snippet for library makefile
       --extract-include-directive  extract the #include directive
       --extract-link-directive     extract the linker directive
+      --extract-recursive-link-directive  extract the linker directive of the
+                                          module and its dependencies,
+                                          recursively, all together
       --extract-license            report the license terms of the source files
                                    under lib/
       --extract-maintainer         report the maintainer(s) inside gnulib
@@ -265,14 +280,24 @@ Options for --import, --add/remove-import:
                             placed (default \"tests\").
       --aux-dir=DIRECTORY   Directory relative to --dir where auxiliary build
                             tools are placed (default comes from configure.ac).
+      --gnu-make            Output for GNU Make instead of for the default
+                            Automake
       --lgpl[=2|=3orGPLv2|=3]
                             Abort if modules aren't available under the LGPL.
                             Also modify license template from GPL to LGPL.
                             The version number of the LGPL can be specified;
                             the default is currently LGPLv3.
-      --makefile-name=NAME  Name of makefile in automake syntax in the
-                            source-base and tests-base directories
-                            (default \"Makefile.am\").
+      --makefile-name=NAME  Name of makefile in the source-base and tests-base
+                            directories (default \"Makefile.am\", or
+                            \"Makefile.in\" if --gnu-make).
+      --tests-makefile-name=NAME
+                            Name of makefile in the tests-base directory
+                            (default as specified through --makefile-name).
+      --automake-subdir     Specify that the makefile in the source-base
+                            directory be generated in such a way that it can
+                            be 'include'd from the toplevel Makefile.am.
+      --automake-subdir-tests
+                            Likewise, but for the tests directory.
       --macro-prefix=PREFIX  Specify the prefix of the macros 'gl_EARLY' and
                             'gl_INIT'. Default is 'gl'.
       --po-domain=NAME      Specify the prefix of the i18n domain. Usually use
@@ -294,15 +319,19 @@ Options for --import, --add/remove-import, --update,
   -s, --symbolic, --symlink Make symbolic links instead of copying files.
       --local-symlink       Make symbolic links instead of copying files, only
                             for files from the local override directory.
+  -h, --hardlink            Make hard links instead of copying files.
+      --local-hardlink      Make hard links instead of copying files, only
+                            for files from the local override directory.
 
 Options for --import, --add/remove-import, --update:
 
   -S, --more-symlinks       Deprecated; equivalent to --symlink.
+  -H, --more-hardlinks      Deprecated; equivalent to --hardlink.
 
 Report bugs to <bug-gnulib@gnu.org>.'''
         return result
 
-    def version(self):
+    def version(self) -> str:
         '''Return formatted string which contains git version.'''
         if isdir(DIRS['git']):
             have_git = None

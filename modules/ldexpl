@@ -3,6 +3,7 @@ ldexpl() function: multiply a 'long double' by a power of 2.
 
 Files:
 lib/ldexpl.c
+lib/ldexp.c
 m4/ldexpl.m4
 
 Depends-on:
@@ -11,6 +12,7 @@ extensions
 ldexp           [{ test $HAVE_DECL_LDEXPL = 0 || test $gl_func_ldexpl = no; } && test $HAVE_SAME_LONG_DOUBLE_AS_DOUBLE = 1]
 isnanl          [{ test $HAVE_DECL_LDEXPL = 0 || test $gl_func_ldexpl = no; } && test $HAVE_SAME_LONG_DOUBLE_AS_DOUBLE = 0]
 fpucw           [{ test $HAVE_DECL_LDEXPL = 0 || test $gl_func_ldexpl = no; } && test $HAVE_SAME_LONG_DOUBLE_AS_DOUBLE = 0]
+stdbool         [{ test $HAVE_DECL_LDEXPL = 0 || test $gl_func_ldexpl = no; } && test $HAVE_SAME_LONG_DOUBLE_AS_DOUBLE = 0]
 
 configure.ac:
 gl_FUNC_LDEXPL
@@ -30,7 +32,7 @@ Link:
 $(LDEXPL_LIBM)
 
 License:
-LGPL
+LGPLv2+
 
 Maintainer:
 Paolo Bonzini

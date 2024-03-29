@@ -1,5 +1,5 @@
-# fabsl.m4 serial 3
-dnl Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# fabsl.m4 serial 5
+dnl Copyright (C) 2011-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -16,10 +16,10 @@ AC_DEFUN([gl_FUNC_FABSL],
   gl_MATHFUNC([fabsl], [long double], [(long double)])
   if test $gl_cv_func_fabsl_no_libm = yes \
      || test $gl_cv_func_fabsl_in_libm = yes; then
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $FABSL_LIBM"
     gl_FUNC_FABSL_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_fabsl_works" in
       *yes) ;;
       *) REPLACE_FABSL=1 ;;
@@ -66,10 +66,10 @@ int main ()
         [gl_cv_func_fabsl_works=yes],
         [gl_cv_func_fabsl_works=no],
         [case "$host_os" in
-           irix*)  gl_cv_func_fabsl_works="guessing no" ;;
-                   # Guess yes on native Windows.
-           mingw*) gl_cv_func_fabsl_works="guessing yes" ;;
-           *)      gl_cv_func_fabsl_works="guessing yes" ;;
+           irix*)             gl_cv_func_fabsl_works="guessing no" ;;
+                              # Guess yes on native Windows.
+           mingw* | windows*) gl_cv_func_fabsl_works="guessing yes" ;;
+           *)                 gl_cv_func_fabsl_works="guessing yes" ;;
          esac
         ])
     ])

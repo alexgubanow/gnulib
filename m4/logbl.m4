@@ -1,5 +1,5 @@
-# logbl.m4 serial 5
-dnl Copyright (C) 2012-2023 Free Software Foundation, Inc.
+# logbl.m4 serial 8
+dnl Copyright (C) 2012-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -19,10 +19,10 @@ AC_DEFUN([gl_FUNC_LOGBL],
   gl_MATHFUNC([logbl], [long double], [(long double)])
   if test $gl_cv_func_logbl_no_libm = yes \
      || test $gl_cv_func_logbl_in_libm = yes; then
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $LOGBL_LIBM"
     gl_FUNC_LOGBL_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_logbl_works" in
       *yes) ;;
       *) REPLACE_LOGBL=1 ;;
@@ -69,6 +69,11 @@ AC_DEFUN([gl_FUNC_LOGBL_WORKS],
         [AC_LANG_SOURCE([[
 #include <float.h>
 #include <math.h>
+#include <signal.h> /* for signal */
+#ifdef SIGALRM
+# include <unistd.h> /* for alarm, _exit */
+static void quit (int sig) { _exit (sig + 128); }
+#endif
 /* Override the values of <float.h>, like done in float.in.h.  */
 #if defined __i386__ && (defined __BEOS__ || defined __OpenBSD__)
 # undef LDBL_MIN_EXP
@@ -92,6 +97,10 @@ volatile long double x;
 int main ()
 {
   int i;
+#ifdef SIGALRM
+  signal (SIGALRM, quit);
+  alarm (5);
+#endif
   for (i = 1, x = 1.0L; i >= LDBL_MIN_EXP - 54; i--, x *= 0.5L)
     /* Either x = 2^(i-1) or x = 0.0.  */
     if ((i == LDBL_MIN_EXP - 1 || i == LDBL_MIN_EXP - 54)
@@ -108,10 +117,10 @@ int main ()
         [gl_cv_func_logbl_works=yes],
         [gl_cv_func_logbl_works=no],
         [case "$host_os" in
-           *gnu* | solaris*) gl_cv_func_logbl_works="guessing no" ;;
-                             # Guess yes on native Windows.
-           mingw*)           gl_cv_func_logbl_works="guessing yes" ;;
-           *)                gl_cv_func_logbl_works="guessing yes" ;;
+           *gnu* | solaris*)  gl_cv_func_logbl_works="guessing no" ;;
+                              # Guess yes on native Windows.
+           mingw* | windows*) gl_cv_func_logbl_works="guessing yes" ;;
+           *)                 gl_cv_func_logbl_works="guessing yes" ;;
          esac
         ])
     ])

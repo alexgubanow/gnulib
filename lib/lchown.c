@@ -1,6 +1,6 @@
 /* Provide a stub lchown function for systems that lack it.
 
-   Copyright (C) 1998-1999, 2002, 2004, 2006-2007, 2009-2023 Free Software
+   Copyright (C) 1998-1999, 2002, 2004, 2006-2007, 2009-2024 Free Software
    Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@
 
 /* If the system chown does not follow symlinks, we don't want it
    replaced by gnulib's chown, which does follow symlinks.  */
-# if CHOWN_MODIFIES_SYMLINK
+# if CHOWN_MODIFIES_SYMLINK /* native Windows and some very old platforms */
 #  undef chown
 # endif
 

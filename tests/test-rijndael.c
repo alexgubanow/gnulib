@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005, 2010-2023 Free Software Foundation, Inc.
+ * Copyright (C) 2005, 2010-2024 Free Software Foundation, Inc.
  * Written by Simon Josefsson
  *
  * This program is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ main (int argc, char *argv[])
     "\x00\x00\x00\x00\x00\x00\x00\x00";
   char ct[] = "\xC3\x4C\x05\x2C\xC0\xDA\x8D\x73"
     "\x45\x1A\xFE\x5F\x03\xBE\x29\x7F";
-  size_t i;
+  size_t round;
 
   rc = rijndaelMakeKey (&key, RIJNDAEL_DIR_ENCRYPT,
                         128, "00000000000000000000000000000000");
@@ -47,7 +47,7 @@ main (int argc, char *argv[])
 
   memset (in, 0, RIJNDAEL_BITSPERBLOCK / 8);
 
-  for (i = 0; i < 10000; i++)
+  for (round = 0; round < 10000; round++)
     {
       rc = rijndaelBlockEncrypt (&cipher, &key, in, 128, out);
       if (rc < 0)
@@ -78,7 +78,7 @@ main (int argc, char *argv[])
   if (rc != 0)
     printf ("cipherInit failed %d\n", rc);
 
-  for (i = 0; i < 10000; i++)
+  for (round = 0; round < 10000; round++)
     {
       memcpy (in, out, RIJNDAEL_BITSPERBLOCK / 8);
 

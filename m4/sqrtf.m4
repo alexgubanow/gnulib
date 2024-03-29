@@ -1,5 +1,5 @@
-# sqrtf.m4 serial 3
-dnl Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# sqrtf.m4 serial 4
+dnl Copyright (C) 2011-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -14,10 +14,10 @@ AC_DEFUN([gl_FUNC_SQRTF],
 
   dnl Test whether sqrtf() exists. Assume that sqrtf(), if it exists, is
   dnl defined in the same library as sqrt().
-  save_LIBS="$LIBS"
+  saved_LIBS="$LIBS"
   LIBS="$LIBS $SQRT_LIBM"
   AC_CHECK_FUNCS([sqrtf])
-  LIBS="$save_LIBS"
+  LIBS="$saved_LIBS"
   if test $ac_cv_func_sqrtf = yes; then
     SQRTF_LIBM="$SQRT_LIBM"
   else

@@ -1,5 +1,6 @@
 Files:
 tests/test-strtold.c
+tests/test-strtold.h
 tests/test-strtold1.sh
 tests/test-strtold1.c
 tests/signature.h
@@ -12,6 +13,7 @@ Depends-on:
 float
 isnanl-nolibm
 signbit
+setlocale
 
 configure.ac:
 gt_LOCALE_FR

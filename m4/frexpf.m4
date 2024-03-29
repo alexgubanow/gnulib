@@ -1,5 +1,5 @@
-# frexpf.m4 serial 6
-dnl Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# frexpf.m4 serial 10
+dnl Copyright (C) 2011-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -18,10 +18,10 @@ AC_DEFUN([gl_FUNC_FREXPF],
   gl_MATHFUNC([frexpf], [float], [(float, int *)])
   if test $gl_cv_func_frexpf_no_libm = yes \
      || test $gl_cv_func_frexpf_in_libm = yes; then
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $FREXPF_LIBM"
     gl_FUNC_FREXPF_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_frexpf_works" in
       *yes) ;;
       *)    REPLACE_FREXPF=1 ;;
@@ -80,7 +80,8 @@ int main()
   {
     int exp;
     float y = frexpf (x, &exp);
-    if (memcmp (&y, &x, sizeof x))
+    float x1 = x;
+    if (memcmp (&y, &x1, sizeof x1))
       result |= 2;
   }
   return result;
@@ -89,7 +90,11 @@ int main()
         [gl_cv_func_frexpf_works=no],
         [case "$host_os" in
            irix*) gl_cv_func_frexpf_works="guessing no" ;;
-           mingw*) # Guess yes with MSVC, no with mingw.
+           # Guess yes with MSVC, no with mingw.
+           windows*-msvc*)
+             gl_cv_func_frexpf_works="guessing yes"
+             ;;
+           mingw* | windows*)
              AC_EGREP_CPP([Good], [
 #ifdef _MSC_VER
  Good

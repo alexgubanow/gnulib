@@ -1,5 +1,5 @@
 /* Case-insensitive string comparison function.
-   Copyright (C) 1998-1999, 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-1999, 2005-2024 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2005,
    based on earlier glibc code.
 
@@ -23,8 +23,13 @@
 
 #include <ctype.h>
 #include <limits.h>
+#include <stdlib.h>
 
-#include "mbuiterf.h"
+#if GNULIB_MCEL_PREFER
+# include "mcel.h"
+#else
+# include "mbuiterf.h"
+#endif
 
 /* Compare the initial segment of the character string S1 consisting of at most
    N characters with the initial segment of the character string S2 consisting
@@ -39,20 +44,30 @@ mbsncasecmp (const char *s1, const char *s2, size_t n)
   if (s1 == s2 || n == 0)
     return 0;
 
+  const char *iter1 = s1;
+  const char *iter2 = s2;
+
   /* Be careful not to look at the entire extent of s1 or s2 until needed.
      This is useful because when two strings differ, the difference is
      most often already in the very few first characters.  */
   if (MB_CUR_MAX > 1)
     {
+#if GNULIB_MCEL_PREFER
+      while (true)
+        {
+          mcel_t g1 = mcel_scanz (iter1); iter1 += g1.len;
+          mcel_t g2 = mcel_scanz (iter2); iter2 += g2.len;
+          int cmp = mcel_tocmp (c32tolower, g1, g2);
+          n--;
+          if (cmp | !n | !g1.ch)
+            return cmp;
+        }
+#else
       mbuif_state_t state1;
-      const char *iter1;
       mbuif_init (state1);
-      iter1 = s1;
 
       mbuif_state_t state2;
-      const char *iter2;
       mbuif_init (state2);
-      iter2 = s2;
 
       while (mbuif_avail (state1, iter1) && mbuif_avail (state2, iter2))
         {
@@ -76,28 +91,29 @@ mbsncasecmp (const char *s1, const char *s2, size_t n)
         /* s1 terminated before s2 and n.  */
         return -1;
       return 0;
+#endif
     }
   else
-    {
-      const unsigned char *p1 = (const unsigned char *) s1;
-      const unsigned char *p2 = (const unsigned char *) s2;
-      unsigned char c1, c2;
-
-      for (; ; p1++, p2++)
-        {
-          c1 = tolower (*p1);
-          c2 = tolower (*p2);
-
-          if (--n == 0 || c1 == '\0' || c1 != c2)
-            break;
-        }
-
-      if (UCHAR_MAX <= INT_MAX)
-        return c1 - c2;
-      else
+    for (;;)
+      {
+        unsigned char c1 = *iter1++;
+        unsigned char c2 = *iter2++;
         /* On machines where 'char' and 'int' are types of the same size, the
            difference of two 'unsigned char' values - including the sign bit -
            doesn't fit in an 'int'.  */
-        return _GL_CMP (c1, c2);
-    }
+        int cmp = UCHAR_MAX <= INT_MAX ? c1 - c2 : _GL_CMP (c1, c2);
+        if (cmp != 0)
+          {
+            c1 = tolower (c1);
+            if (c1 == c2)
+              cmp = 0;
+            else
+              {
+                c2 = tolower (c2);
+                cmp = UCHAR_MAX <= INT_MAX ? c1 - c2 : _GL_CMP (c1, c2);
+              }
+          }
+        if (cmp | !c1 | !--n)
+          return cmp;
+      }
 }

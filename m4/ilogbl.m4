@@ -1,5 +1,5 @@
-# ilogbl.m4 serial 6
-dnl Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# ilogbl.m4 serial 8
+dnl Copyright (C) 2010-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -15,7 +15,7 @@ AC_DEFUN([gl_FUNC_ILOGBL],
 
   dnl Test whether ilogbl() exists. Assume that ilogbl(), if it exists, is
   dnl defined in the same library as ilogb().
-  save_LIBS="$LIBS"
+  saved_LIBS="$LIBS"
   LIBS="$LIBS $ILOGB_LIBM"
   AC_CACHE_CHECK([for ilogbl],
     [gl_cv_func_ilogbl],
@@ -33,13 +33,13 @@ AC_DEFUN([gl_FUNC_ILOGBL],
         [gl_cv_func_ilogbl=yes],
         [gl_cv_func_ilogbl=no])
     ])
-  LIBS="$save_LIBS"
+  LIBS="$saved_LIBS"
   if test $gl_cv_func_ilogbl = yes; then
     ILOGBL_LIBM="$ILOGB_LIBM"
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $ILOGBL_LIBM"
     gl_FUNC_ILOGBL_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_ilogbl_works" in
       *yes) ;;
       *) REPLACE_ILOGBL=1 ;;
@@ -159,11 +159,10 @@ int main (int argc, char *argv[])
         [gl_cv_func_ilogbl_works=yes],
         [gl_cv_func_ilogbl_works=no],
         [case "$host_os" in
-           aix* | haiku*)
-                   gl_cv_func_ilogbl_works="guessing no" ;;
-                   # Guess yes on native Windows.
-           mingw*) gl_cv_func_ilogbl_works="guessing yes" ;;
-           *)      gl_cv_func_ilogbl_works="guessing yes" ;;
+           aix* | haiku*)     gl_cv_func_ilogbl_works="guessing no" ;;
+                              # Guess yes on native Windows.
+           mingw* | windows*) gl_cv_func_ilogbl_works="guessing yes" ;;
+           *)                 gl_cv_func_ilogbl_works="guessing yes" ;;
          esac
         ])
     ])

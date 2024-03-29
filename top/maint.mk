@@ -2,7 +2,7 @@
 # This Makefile fragment tries to be general-purpose enough to be
 # used by many projects via the gnulib maintainer-makefile module.
 
-## Copyright (C) 2001-2023 Free Software Foundation, Inc.
+## Copyright (C) 2001-2024 Free Software Foundation, Inc.
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -503,6 +503,7 @@ sc_prohibit_have_config_h:
 # Nearly all .c files must include <config.h>.  However, we also permit this
 # via inclusion of a package-specific header, if cfg.mk specified one.
 # config_h_header must be suitable for grep -E.
+# Rationale: The Gnulib documentation, node 'Include <config.h>'.
 config_h_header ?= <config\.h>
 sc_require_config_h:
 	@require='^# *include $(config_h_header)'			\
@@ -526,6 +527,7 @@ perl_config_h_first_ =							\
 
 # You must include <config.h> before including any other header file.
 # This can possibly be via a package-specific header, if given by cfg.mk.
+# Rationale: The Gnulib documentation, node 'Include <config.h>'.
 sc_require_config_h_first:
 	@if $(VC_LIST_EXCEPT) | $(GREP) '\.c$$' > /dev/null; then	\
 	  files=$$($(VC_LIST_EXCEPT) | $(GREP) '\.c$$') &&		\
@@ -534,6 +536,89 @@ sc_require_config_h_first:
 		'before <config.h>' 1>&2; exit 1; } || :;		\
 	else :;								\
 	fi
+
+# Generated headers that override system headers.
+# Keep sorted.
+gl_prefer_angle_bracket_headers_ ?= \
+  alloca.h		\
+  arpa/inet.h		\
+  assert.h		\
+  ctype.h		\
+  dirent.h		\
+  errno.h		\
+  error.h		\
+  fcntl.h		\
+  fenv.h		\
+  float.h		\
+  fnmatch.h		\
+  getopt.h		\
+  glob.h		\
+  iconv.h		\
+  inttypes.h		\
+  langinfo.h		\
+  limits.h		\
+  locale.h		\
+  malloc.h		\
+  math.h		\
+  monetary.h		\
+  netdb.h		\
+  net/if.h		\
+  netinet/in.h		\
+  omp.h			\
+  poll.h		\
+  pthread.h		\
+  pty.h			\
+  sched.h		\
+  search.h		\
+  selinux/selinux.h	\
+  signal.h		\
+  spawn.h		\
+  stdalign.h		\
+  stdarg.h		\
+  stddef.h		\
+  stdint.h		\
+  stdio.h		\
+  stdlib.h		\
+  string.h		\
+  strings.h		\
+  sysexits.h		\
+  sys/file.h		\
+  sys/ioctl.h		\
+  sys/msg.h		\
+  sys/random.h		\
+  sys/resource.h	\
+  sys/select.h		\
+  sys/sem.h		\
+  sys/shm.h		\
+  sys/socket.h		\
+  sys/stat.h		\
+  sys/time.h		\
+  sys/times.h		\
+  sys/types.h		\
+  sys/uio.h		\
+  sys/utsname.h		\
+  sys/wait.h		\
+  termios.h		\
+  threads.h		\
+  time.h		\
+  uchar.h		\
+  unistd.h		\
+  utime.h		\
+  utmp.h		\
+  wchar.h		\
+  wctype.h
+
+# Remove each .h suffix and change each space to "|".
+angle_bracket_header_re = \
+  $(subst $(_sp),|,$(patsubst %.h,%,$(gl_prefer_angle_bracket_headers_)))
+
+# Suggest using '#include <header.h>' instead of '#include "header.h"' for
+# headers that override system headers.
+# Rationale: The Gnulib documentation, node 'Style of #include statements'.
+sc_prefer_angle_bracket_headers:
+	@prohibit='^ *# *include "($(angle_bracket_header_re))\.h"'	\
+	halt='Use #include <hdr.h>, not #include "hdr.h" for the above'	\
+	  $(_sc_search_regexp)
 
 sc_prohibit_HAVE_MBRTOWC:
 	@prohibit='\bHAVE_MBRTOWC\b'					\
@@ -914,6 +999,7 @@ sc_prohibit_always-defined_macros:
 		 exit 1; }						\
 	    || :;							\
 	fi
+
 # ==================================================================
 
 # Prohibit checked in backup files.
@@ -998,12 +1084,12 @@ sc_prohibit_empty_lines_at_EOF:
 	       exit 1; }						\
 	  || :
 
-# Make sure we don't use st_blocks.  Use ST_NBLOCKS instead.
+# Make sure we don't use st_blocks.  Use ST_NBLOCKS or STP_NBLOCKS instead.
 # This is a bit of a kludge, since it prevents use of the string
 # even in comments, but for now it does the job with no false positives.
 sc_prohibit_stat_st_blocks:
 	@prohibit='[.>]st_blocks'					\
-	halt='do not use st_blocks; use ST_NBLOCKS'			\
+	halt='do not use st_blocks; use ST_NBLOCKS or STP_NBLOCKS'	\
 	  $(_sc_search_regexp)
 
 # Make sure we don't define any S_IS* macros in src/*.c files.
@@ -1375,13 +1461,13 @@ sc_unportable_grep_q:
 
 sc_readme_link_install:
 	@require='INSTALL'					\
-	in_vc_files='$(top_srcdir)/README$$'                    \
+	in_vc_files='^README$$'					\
 	halt='The README file should refer to INSTALL'          \
 	  $(_sc_search_regexp)
 
 sc_readme_link_copying:
 	@require='COPYING'					\
-	in_vc_files='$(top_srcdir)/README$$'                    \
+	in_vc_files='^README$$'					\
 	halt='The README file should refer to COPYING[.LESSER]' \
 	  $(_sc_search_regexp)
 

@@ -1,6 +1,6 @@
 /* Traverse a file hierarchy.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -981,7 +981,6 @@ next:   tmp = p;
                         fts_load(sp, p);
                         if (! setup_dir(sp)) {
                                 free_dir(sp);
-                                __set_errno (ENOMEM);
                                 return (NULL);
                         }
                         goto check_for_dir;
@@ -1028,10 +1027,7 @@ check_for_dir:
                       sp->fts_dev = p->fts_statp->st_dev;
                     Dprintf (("  entering: %s\n", p->fts_path));
                     if (! enter_dir (sp, p))
-                      {
-                        __set_errno (ENOMEM);
-                        return NULL;
-                      }
+                      return NULL;
                   }
                 return p;
         }
@@ -1348,8 +1344,9 @@ fts_build (register FTS *sp, int type)
                   cur->fts_info = FTS_D;
                 else if (! enter_dir (sp, cur))
                   {
+                    int err = errno;
                     closedir_and_clear (cur->fts_dirp);
-                    __set_errno (ENOMEM);
+                    __set_errno (err);
                     return NULL;
                   }
               }
@@ -1717,7 +1714,7 @@ same_fd (int fd1, int fd2)
   struct stat sb1, sb2;
   return (fstat (fd1, &sb1) == 0
           && fstat (fd2, &sb2) == 0
-          && SAME_INODE (sb1, sb2));
+          && psame_inode (&sb1, &sb2));
 }
 
 static void
@@ -1937,6 +1934,7 @@ internal_function
 fts_lfree (register FTSENT *head)
 {
         register FTSENT *p;
+        int err = errno;
 
         /* Free a linked list of structures. */
         while ((p = head)) {
@@ -1945,6 +1943,8 @@ fts_lfree (register FTSENT *head)
                         closedir (p->fts_dirp);
                 free(p);
         }
+
+        __set_errno (err);
 }
 
 /*

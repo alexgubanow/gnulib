@@ -1,5 +1,5 @@
 /* Test of character set conversion with error handling and autodetection.
-   Copyright (C) 2007-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -308,7 +308,8 @@ main ()
     }
 
   /* autodetect_jp is only supported when iconv() support ISO-2022-JP-2.  */
-# if defined _LIBICONV_VERSION || !(defined _AIX || defined __sgi || defined __hpux || defined __osf__ || defined __sun)
+# if (defined _LIBICONV_VERSION && !(_LIBICONV_VERSION == 0x10b && defined __APPLE__)) \
+     || !(defined _AIX || defined __sgi || defined __hpux || defined __osf__ || defined __sun)
   if (iconv_supports_encoding ("ISO-2022-JP-2"))
     {
       /* Test conversions from autodetect_jp to UTF-8.  */
@@ -405,7 +406,7 @@ main ()
     }
 # endif
 
-# if (((__GLIBC__ == 2 && __GLIBC_MINOR__ >= 2) || __GLIBC__ > 2) && !defined __UCLIBC__) || _LIBICONV_VERSION >= 0x0105
+# if (((__GLIBC__ == 2 && __GLIBC_MINOR__ >= 2) || __GLIBC__ > 2) && !defined __UCLIBC__) || (_LIBICONV_VERSION >= 0x0105 && !(_LIBICONV_VERSION == 0x10b && defined __APPLE__))
   /* Test conversion from UTF-8 to ISO-8859-1 with transliteration.  */
   for (h = 0; h < SIZEOF (handlers); h++)
     {
@@ -547,7 +548,8 @@ main ()
     }
 
   /* autodetect_jp is only supported when iconv() support ISO-2022-JP-2.  */
-# if defined _LIBICONV_VERSION || !(defined _AIX || defined __sgi || defined __hpux || defined __osf__ || defined __sun)
+# if (defined _LIBICONV_VERSION && !(_LIBICONV_VERSION == 0x10b && defined __APPLE__)) \
+     || !(defined _AIX || defined __sgi || defined __hpux || defined __osf__ || defined __sun)
   if (iconv_supports_encoding ("ISO-2022-JP-2"))
     {
       /* Test conversions from autodetect_jp to UTF-8.  */
@@ -584,7 +586,7 @@ main ()
     }
 # endif
 
-# if (((__GLIBC__ == 2 && __GLIBC_MINOR__ >= 2) || __GLIBC__ > 2) && !defined __UCLIBC__) || _LIBICONV_VERSION >= 0x0105
+# if (((__GLIBC__ == 2 && __GLIBC_MINOR__ >= 2) || __GLIBC__ > 2) && !defined __UCLIBC__) || (_LIBICONV_VERSION >= 0x0105 && !(_LIBICONV_VERSION == 0x10b && defined __APPLE__))
   /* Test conversion from UTF-8 to ISO-8859-1 with transliteration.  */
   for (h = 0; h < SIZEOF (handlers); h++)
     {

@@ -1,5 +1,5 @@
 /* Utilities for benchmarks.
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ timing_end (struct timings_state *ts)
                  + usage.ru_stime.tv_usec - ts->sys_start.tv_usec;
 }
 
-static void
+_GL_UNUSED static void
 timing_output (const struct timings_state *ts)
 {
   printf ("real %10.6f\n", (double)ts->real_usec / 1000000.0);

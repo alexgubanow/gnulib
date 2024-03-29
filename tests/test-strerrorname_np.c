@@ -1,6 +1,6 @@
 /* Test of strerrorname_np() function.
 
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -1125,7 +1125,7 @@ main (void)
   #if defined ENOSHARE
   ASSERT (strcmp (strerrorname_np (ENOSHARE), "ENOSHARE") == 0);
   #endif
-  /* HP-UX, OSF/1 */
+  /* Linux, HP-UX, OSF/1 */
   #if defined ENOSYM
   ASSERT (strcmp (strerrorname_np (ENOSYM), "ENOSYM") == 0);
   #endif
@@ -1249,7 +1249,7 @@ main (void)
   #if defined EREMOTEIO
   ASSERT (strcmp (strerrorname_np (EREMOTEIO), "EREMOTEIO") == 0);
   #endif
-  /* HP-UX */
+  /* Linux, HP-UX */
   #if defined EREMOTERELEASE
   ASSERT (strcmp (strerrorname_np (EREMOTERELEASE), "EREMOTERELEASE") == 0);
   #endif

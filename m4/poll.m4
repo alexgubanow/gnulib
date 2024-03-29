@@ -1,5 +1,5 @@
-# poll.m4 serial 21
-dnl Copyright (c) 2003, 2005-2007, 2009-2023 Free Software Foundation, Inc.
+# poll.m4 serial 22
+dnl Copyright (c) 2003, 2005-2007, 2009-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -79,7 +79,7 @@ This is MacOSX or AIX
   POLL_LIB="$LIBSOCKET"
   if test $HAVE_POLL = 0 || test $REPLACE_POLL = 1; then
     case "$host_os" in
-      mingw*)
+      mingw* | windows*)
         dnl On the MSVC platform, the function MsgWaitForMultipleObjects
         dnl (used in lib/poll.c) requires linking with -luser32. On mingw,
         dnl it is implicit.

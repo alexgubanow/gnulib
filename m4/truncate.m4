@@ -1,5 +1,5 @@
-# truncate.m4 serial 5   -*- Autoconf -*-
-dnl Copyright (C) 2017-2023 Free Software Foundation, Inc.
+# truncate.m4 serial 7   -*- Autoconf -*-
+dnl Copyright (C) 2017-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -18,7 +18,7 @@ AC_DEFUN([gl_FUNC_TRUNCATE],
   if test $ac_cv_have_decl_truncate = yes; then
     m4_ifdef([gl_LARGEFILE], [
       case "$host_os" in
-        mingw*)
+        mingw* | windows*)
           dnl Native Windows, and Large File Support is requested.
           dnl The mingw64 truncate64() function is based on ftruncate64(),
           dnl which is unreliable (it may delete the file, see
@@ -48,14 +48,15 @@ AC_DEFUN([gl_FUNC_TRUNCATE],
            [gl_cv_func_truncate_works=yes],
            [gl_cv_func_truncate_works=no],
            [case "$host_os" in
-                               # Guess yes on Linux systems.
-              linux-* | linux) gl_cv_func_truncate_works="guessing yes" ;;
-                               # Guess yes on glibc systems.
-              *-gnu* | gnu*)   gl_cv_func_truncate_works="guessing yes" ;;
-                               # Guess no on AIX systems.
-              aix*)            gl_cv_func_truncate_works="guessing no" ;;
-                               # If we don't know, obey --enable-cross-guesses.
-              *)               gl_cv_func_truncate_works="$gl_cross_guess_normal" ;;
+                                 # Guess yes on Linux systems
+                                 # and on systems that emulate the Linux system calls.
+              linux* | midipix*) gl_cv_func_truncate_works="guessing yes" ;;
+                                 # Guess yes on glibc systems.
+              *-gnu* | gnu*)     gl_cv_func_truncate_works="guessing yes" ;;
+                                 # Guess no on AIX systems.
+              aix*)              gl_cv_func_truncate_works="guessing no" ;;
+                                 # If we don't know, obey --enable-cross-guesses.
+              *)                 gl_cv_func_truncate_works="$gl_cross_guess_normal" ;;
             esac
            ])
          rm -f conftest.tmp

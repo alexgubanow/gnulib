@@ -1,5 +1,5 @@
 /* Test of c32ispunct() function.
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -136,6 +136,15 @@ main (int argc, char *argv[])
       {
       case '0':
         /* C locale; tested above.  */
+        /* These characters are not in the ISO C "basic character set", but
+           are nevertheless usually expected to be punctuation or symbol
+           characters.  */
+        is = for_character ("$", 1);
+        ASSERT (is != 0);
+        is = for_character ("@", 1);
+        ASSERT (is != 0);
+        is = for_character ("`", 1);
+        ASSERT (is != 0);
         return 0;
 
       case '1':
@@ -256,7 +265,7 @@ main (int argc, char *argv[])
 
       case '4':
         /* Locale encoding is GB18030.  */
-        #if GL_CHAR32_T_IS_UNICODE && (defined __NetBSD__ || defined __sun)
+        #if (defined __GLIBC__ && __GLIBC__ == 2 && __GLIBC_MINOR__ >= 13 && __GLIBC_MINOR__ <= 15) || (GL_CHAR32_T_IS_UNICODE && (defined __FreeBSD__ || defined __NetBSD__ || defined __sun))
         fputs ("Skipping test: The GB18030 converter in this system's iconv is broken.\n", stderr);
         return 77;
         #endif

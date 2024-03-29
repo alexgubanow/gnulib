@@ -4,10 +4,13 @@
 
 POSIX specification:@* @url{https://pubs.opengroup.org/onlinepubs/9699919799/functions/rand.html}
 
-Gnulib module: ---
+Gnulib module: rand
 
 Portability problems fixed by Gnulib:
 @itemize
+@item
+This function crashes when used in multithreaded programs on some platforms:
+CheriBSD.
 @end itemize
 
 Portability problems not fixed by Gnulib:
@@ -15,4 +18,7 @@ Portability problems not fixed by Gnulib:
 @item
 This function is only defined as an inline function on some platforms:
 Android 4.4.
+@item
+This function is not multithread-safe on some platforms:
+musl libc, macOS 12.5, FreeBSD 13.2, NetBSD 9.3, AIX 7.1, Solaris 11.4.
 @end itemize

@@ -1,5 +1,5 @@
 /* Test of buffer that accumulates a string by piecewise concatenation.
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include "string-buffer.h"
 
 #include <string.h>
+#include <wchar.h>
 
 #include "macros.h"
 
@@ -101,7 +102,7 @@ main ()
 
     sb_init (&buffer);
     sb_append (&buffer, "<");
-    sb_appendf (&buffer, "%lc", 0x76543210);
+    sb_appendf (&buffer, "%lc", (wint_t) 0x76543210);
     sb_append (&buffer, "|");
     sb_appendf (&buffer, invalid_format_string_1, 1);
     sb_append (&buffer, "|");

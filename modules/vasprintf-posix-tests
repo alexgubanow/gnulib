@@ -2,12 +2,14 @@ Files:
 tests/test-vasprintf-posix.c
 tests/minus-zero.h
 tests/infinity.h
-tests/nan.h
 tests/macros.h
 
 Depends-on:
+c99
 stdint
 float
+nan
+snan
 
 configure.ac:
 AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])

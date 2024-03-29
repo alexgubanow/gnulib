@@ -1,5 +1,5 @@
 /* Test of u8_v[a]s[n]printf() function.
-   Copyright (C) 2007, 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007, 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -786,11 +786,15 @@ test_xfunction (uint8_t * (*my_xasprintf) (const char *, ...))
     int count = -1;
     uint8_t *result =
       my_xasprintf ("%d %n", 123, &count, 33, 44, 55);
+#if NEED_PRINTF_WITH_N_DIRECTIVE
     static const uint8_t expected[] = "123 ";
     ASSERT (result != NULL);
     ASSERT (u8_strcmp (result, expected) == 0);
     ASSERT (count == 4);
     free (result);
+#else
+    ASSERT (result == NULL);
+#endif
   }
 
   /* Test the support of the POSIX/XSI format strings with positions.  */

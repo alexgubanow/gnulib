@@ -1,5 +1,5 @@
 /* Tests of fstatat.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ do_lstat (char const *name, struct stat *st)
 }
 
 int
-main (_GL_UNUSED int argc, char *argv[])
+main (_GL_UNUSED int argc, _GL_UNUSED char *argv[])
 {
   int result;
 

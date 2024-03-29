@@ -1,6 +1,6 @@
 /* A substitute for ISO C99 <wchar.h>, for platforms that have issues.
 
-   Copyright (C) 2007-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -85,7 +85,8 @@
 #define _@GUARD_PREFIX@_WCHAR_H
 
 /* This file uses _GL_ATTRIBUTE_DEALLOC, _GL_ATTRIBUTE_MALLOC,
-   _GL_ATTRIBUTE_PURE, GNULIB_POSIXCHECK, HAVE_RAW_DECL_*.  */
+   _GL_ATTRIBUTE_NOTHROW, _GL_ATTRIBUTE_PURE, GNULIB_POSIXCHECK,
+   HAVE_RAW_DECL_*.  */
 #if !_GL_CONFIG_H_INCLUDED
  #error "Please include config.h first."
 #endif
@@ -133,6 +134,28 @@
 #  define _GL_ATTRIBUTE_PURE __attribute__ ((__pure__))
 # else
 #  define _GL_ATTRIBUTE_PURE /* empty */
+# endif
+#endif
+
+/* _GL_ATTRIBUTE_NOTHROW declares that the function does not throw exceptions.
+ */
+#ifndef _GL_ATTRIBUTE_NOTHROW
+# if defined __cplusplus
+#  if (__GNUC__ + (__GNUC_MINOR__ >= 8) > 2) || __clang_major >= 4
+#   if __cplusplus >= 201103L
+#    define _GL_ATTRIBUTE_NOTHROW noexcept (true)
+#   else
+#    define _GL_ATTRIBUTE_NOTHROW throw ()
+#   endif
+#  else
+#   define _GL_ATTRIBUTE_NOTHROW
+#  endif
+# else
+#  if (__GNUC__ + (__GNUC_MINOR__ >= 3) > 3) || defined __clang__
+#   define _GL_ATTRIBUTE_NOTHROW __attribute__ ((__nothrow__))
+#  else
+#   define _GL_ATTRIBUTE_NOTHROW
+#  endif
 # endif
 #endif
 
@@ -195,7 +218,7 @@ typedef int rpl_mbstate_t;
       && !(defined __cplusplus && defined GNULIB_NAMESPACE))
 /* We can't do '#define free rpl_free' here.  */
 #  if defined __cplusplus && (__GLIBC__ + (__GLIBC_MINOR__ >= 14) > 2)
-_GL_EXTERN_C void rpl_free (void *) throw ();
+_GL_EXTERN_C void rpl_free (void *) _GL_ATTRIBUTE_NOTHROW;
 #  else
 _GL_EXTERN_C void rpl_free (void *);
 #  endif
@@ -210,7 +233,7 @@ _GL_EXTERN_C
      void __cdecl free (void *);
 #  else
 #   if defined __cplusplus && (__GLIBC__ + (__GLIBC_MINOR__ >= 14) > 2)
-_GL_EXTERN_C void free (void *) throw ();
+_GL_EXTERN_C void free (void *) _GL_ATTRIBUTE_NOTHROW;
 #   else
 _GL_EXTERN_C void free (void *);
 #   endif
@@ -225,7 +248,7 @@ _GL_EXTERN_C
      void __cdecl free (void *);
 # else
 #  if defined __cplusplus && (__GLIBC__ + (__GLIBC_MINOR__ >= 14) > 2)
-_GL_EXTERN_C void free (void *) throw ();
+_GL_EXTERN_C void free (void *) _GL_ATTRIBUTE_NOTHROW;
 #  else
 _GL_EXTERN_C void free (void *);
 #  endif
@@ -1303,9 +1326,16 @@ _GL_CXXALIAS_MDA (wcsdup, wchar_t *, (const wchar_t *s));
    namespace, not in the global namespace.  So, force a declaration in
    the global namespace.  */
 #  if !@HAVE_WCSDUP@ || (defined __sun && defined __cplusplus) || __GNUC__ >= 11
+#   if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+_GL_FUNCDECL_SYS (wcsdup, wchar_t *,
+                  (const wchar_t *s)
+                  _GL_ATTRIBUTE_NOTHROW
+                  _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
+#   else
 _GL_FUNCDECL_SYS (wcsdup, wchar_t *,
                   (const wchar_t *s)
                   _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
+#   endif
 #  endif
 _GL_CXXALIAS_SYS (wcsdup, wchar_t *, (const wchar_t *s));
 # endif
@@ -1313,9 +1343,16 @@ _GL_CXXALIASWARN (wcsdup);
 #else
 # if __GNUC__ >= 11 && !defined wcsdup
 /* For -Wmismatched-dealloc: Associate wcsdup with free or rpl_free.  */
+#  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+_GL_FUNCDECL_SYS (wcsdup, wchar_t *,
+                  (const wchar_t *s)
+                  _GL_ATTRIBUTE_NOTHROW
+                  _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
+#  else
 _GL_FUNCDECL_SYS (wcsdup, wchar_t *,
                   (const wchar_t *s)
                   _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
+#  endif
 # endif
 # if defined GNULIB_POSIXCHECK
 #  undef wcsdup
@@ -1334,9 +1371,16 @@ _GL_WARN_ON_USE (wcsdup, "wcsdup is unportable - "
 #   endif
 _GL_CXXALIAS_MDA (wcsdup, wchar_t *, (const wchar_t *s));
 #  else
+#   if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+_GL_FUNCDECL_SYS (wcsdup, wchar_t *,
+                  (const wchar_t *s)
+                  _GL_ATTRIBUTE_NOTHROW
+                  _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
+#   else
 _GL_FUNCDECL_SYS (wcsdup, wchar_t *,
                   (const wchar_t *s)
                   _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
+#   endif
 #   if @HAVE_DECL_WCSDUP@
 _GL_CXXALIAS_SYS (wcsdup, wchar_t *, (const wchar_t *s));
 #   endif
@@ -1637,6 +1681,24 @@ _GL_CXXALIASWARN (wcsftime);
 _GL_WARN_ON_USE (wcsftime, "wcsftime is unportable - "
                  "use gnulib module wcsftime for portability");
 # endif
+#endif
+
+
+#if @GNULIB_WGETCWD@ && (defined _WIN32 && !defined __CYGWIN__)
+/* Gets the name of the current working directory.
+   (a) If BUF is non-NULL, it is assumed to have room for SIZE wide characters.
+       This function stores the working directory (NUL-terminated) in BUF and
+       returns BUF.
+   (b) If BUF is NULL, an array is allocated with 'malloc'.  The array is SIZE
+       wide characters long, unless SIZE == 0, in which case it is as big as
+       necessary.
+   If the directory couldn't be determined or SIZE was too small, this function
+   returns NULL and sets errno.  For a directory of length LEN, SIZE should be
+   >= LEN + 3 in case (a) or >= LEN + 1 in case (b).
+   Possible errno values include:
+     - ERANGE if SIZE is too small.
+     - ENOMEM if the memory could no be allocated.  */
+_GL_FUNCDECL_SYS (wgetcwd, wchar_t *, (wchar_t *buf, size_t size));
 #endif
 
 

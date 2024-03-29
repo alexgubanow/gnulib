@@ -1,6 +1,6 @@
 /* Declarations for GNU's read utmp module.
 
-   Copyright (C) 1992-2007, 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2007, 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -114,25 +114,62 @@ enum { UT_HOST_SIZE = -1 };
 
      Field        Type                       Platforms
      ----------   ------                     ---------
-   ⎡ ut_user      char[]                     glibc, musl, macOS, FreeBSD, AIX, HP-UX, IRIX, Solaris, Cygwin
+   ⎡ ut_user      char[]                     glibc, musl, macOS, FreeBSD, AIX, HP-UX, IRIX, Solaris, Cygwin, Android
    ⎣ ut_name      char[]                     NetBSD, Minix
-     ut_id        char[]                     glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin
-     ut_line      char[]                     glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin
-     ut_pid       pid_t                      glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin
-     ut_type      short                      glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin
-   ⎡ ut_tv        struct                     glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin
+     ut_id        char[]                     glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin, Android
+     ut_line      char[]                     glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin, Android
+     ut_pid       pid_t                      glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin, Android
+     ut_type      short                      glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin, Android
+   ⎡ ut_tv        struct                     glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin, Android
    ⎢              { tv_sec; tv_usec; }
    ⎣ ut_time      time_t                     Cygwin
-     ut_host      char[]                     glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin
-     ut_exit      struct                     glibc, musl, NetBSD, Minix, HP-UX, IRIX, Solaris
+     ut_host      char[]                     glibc, musl, macOS, FreeBSD, NetBSD, Minix, AIX, HP-UX, IRIX, Solaris, Cygwin, Android
+     ut_exit      struct                     glibc, musl, NetBSD, Minix, HP-UX, IRIX, Solaris, Android
                   { e_termination; e_exit; }
-     ut_session   [long] int                 glibc, musl, NetBSD, Minix, IRIX, Solaris
+     ut_session   [long] int                 glibc, musl, NetBSD, Minix, IRIX, Solaris, Android
    ⎡ ut_addr      [long] int                 HP-UX, Cygwin
-   ⎢ ut_addr_v6   [u]int[4]                  glibc, musl
+   ⎢ ut_addr_v6   [u]int[4]                  glibc, musl, Android
    ⎣ ut_ss        struct sockaddr_storage    NetBSD, Minix
  */
 
-# define UTMP_STRUCT_NAME utmpx
+# if __GLIBC__ && _TIME_BITS == 64
+/* This is a near-copy of glibc's struct utmpx, which stops working
+   after the year 2038.  Unlike the glibc version, struct utmpx32
+   describes the file format even if time_t is 64 bits.  */
+#define _GL_UT_USER_SIZE  sizeof (((struct utmpx *) 0)->ut_user)
+#define _GL_UT_ID_SIZE    sizeof (((struct utmpx *) 0)->ut_id)
+#define _GL_UT_LINE_SIZE  sizeof (((struct utmpx *) 0)->ut_line)
+#define _GL_UT_HOST_SIZE  sizeof (((struct utmpx *) 0)->ut_host)
+struct utmpx32
+{
+  short int ut_type;               /* Type of login.  */
+  pid_t ut_pid;                    /* Process ID of login process.  */
+  char ut_line[_GL_UT_LINE_SIZE];  /* Devicename.  */
+  char ut_id[_GL_UT_ID_SIZE];      /* Inittab ID.  */
+  char ut_user[_GL_UT_USER_SIZE];  /* Username.  */
+  char ut_host[_GL_UT_HOST_SIZE];  /* Hostname for remote login. */
+  struct __exit_status ut_exit;    /* Exit status of a process marked
+                                      as DEAD_PROCESS.  */
+  /* The fields ut_session and ut_tv must be the same size when compiled
+     32- and 64-bit.  This allows files and shared memory to be shared
+     between 32- and 64-bit applications.  */
+  int ut_session;                  /* Session ID, used for windowing.  */
+  struct
+  {
+    /* Seconds.  Unsigned not signed, as glibc did not exist before 1970,
+       and if the format is still in use after 2038 its timestamps
+       will surely have the sign bit on.  This hack stops working
+       at 2106-02-07 06:28:16 UTC.  */
+    unsigned int tv_sec;
+    int tv_usec;                   /* Microseconds.  */
+  } ut_tv;                         /* Time entry was made.  */
+  int ut_addr_v6[4];               /* Internet address of remote host.  */
+  char ut_reserved[20];            /* Reserved for future use.  */
+};
+#  define UTMP_STRUCT_NAME utmpx32
+# else
+#  define UTMP_STRUCT_NAME utmpx
+# endif
 # define SET_UTMP_ENT setutxent
 # define GET_UTMP_ENT getutxent
 # define END_UTMP_ENT endutxent
@@ -140,6 +177,10 @@ enum { UT_HOST_SIZE = -1 };
 #  define UTMP_NAME_FUNCTION utmpxname
 # elif defined UTXDB_ACTIVE /* FreeBSD */
 #  define UTMP_NAME_FUNCTION(x) setutxdb (UTXDB_ACTIVE, x)
+# elif defined __ANDROID__ /* Android */
+/* As of Android NDK r26, the getutxent, setutxent functions are no-ops.
+   Therefore we can ignore the file name.  */
+#  define UTMP_NAME_FUNCTION(x) ((void) (x))
 # endif
 
 #elif HAVE_UTMP_H
@@ -216,6 +257,13 @@ enum { UT_HOST_SIZE = -1 };
 # define WTMP_FILE "/etc/wtmp"
 #endif
 
+/* In early versions of Android, <utmp.h> did not define BOOT_TIME, only
+   USER_PROCESS.  We need to use the value that is defined in newer versions
+   of Android.  */
+#if defined __ANDROID__ && !defined BOOT_TIME
+# define BOOT_TIME 2
+#endif
+
 /* Some platforms, such as OpenBSD, don't have an ut_type field and don't have
    the BOOT_TIME and USER_PROCESS macros.  But we want to support them in
    'struct gl_utmp'.  */
@@ -226,21 +274,19 @@ enum { UT_HOST_SIZE = -1 };
 
 /* Macros that test (UT)->ut_type.  */
 #ifdef BOOT_TIME
-# define UT_TYPE_BOOT_TIME(UT) UT_TYPE_EQ (UT, BOOT_TIME)
+# define UT_TYPE_BOOT_TIME(UT) ((UT)->ut_type == BOOT_TIME)
 #else
 # define UT_TYPE_BOOT_TIME(UT) 0
 #endif
 #ifdef USER_PROCESS
-# define UT_TYPE_USER_PROCESS(UT) UT_TYPE_EQ (UT, USER_PROCESS)
+# define UT_TYPE_USER_PROCESS(UT) ((UT)->ut_type == USER_PROCESS)
 #else
 # define UT_TYPE_USER_PROCESS(UT) 0
 #endif
 
 /* Determines whether an entry *UT corresponds to a user process.  */
 #define IS_USER_PROCESS(UT)                                    \
-  (UT_USER (UT)[0]                                             \
-   && (UT_TYPE_USER_PROCESS (UT)                               \
-       || (UT_TYPE_NOT_DEFINED && UT_TIME_MEMBER (UT) != 0)))
+  ((UT)->ut_user[0] && UT_TYPE_USER_PROCESS (UT))
 
 /* Define if read_utmp is not just a dummy.  */
 #if READUTMP_USE_SYSTEMD || HAVE_UTMPX_H || HAVE_UTMP_H || defined __CYGWIN__ || defined _WIN32

@@ -1,5 +1,5 @@
-# modfl.m4 serial 9
-dnl Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# modfl.m4 serial 13
+dnl Copyright (C) 2011-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -19,14 +19,58 @@ AC_DEFUN([gl_FUNC_MODFL],
   gl_MATHFUNC([modfl], [long double], [(long double, long double *)])
   if test $gl_cv_func_modfl_no_libm = yes \
      || test $gl_cv_func_modfl_in_libm = yes; then
-    :
+    AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
+    AC_CACHE_CHECK([whether modfl works],
+      [gl_cv_func_modfl_works],
+      [
+        saved_LIBS="$LIBS"
+        LIBS="$LIBS $MODFL_LIBM"
+        AC_RUN_IFELSE(
+          [AC_LANG_SOURCE([[
+#ifndef __NO_MATH_INLINES
+# define __NO_MATH_INLINES 1 /* for glibc */
+#endif
+#include <math.h>
+static long double dummy (long double x, long double *iptr) { return 0; }
+int main (int argc, char *argv[])
+{
+  long double (* volatile my_modfl) (long double, long double *) = argc ? modfl : dummy;
+  long double i;
+  long double f;
+  /* Test modfl(5.972406760L,...).
+     This test fails on NetBSD 9.3/arm64.  */
+  f = my_modfl (5.972406760L, &i);
+  if (!(f < 1.0L && i == 5.0L))
+    return 1;
+  return 0;
+}
+          ]])],
+          [gl_cv_func_modfl_works=yes],
+          [gl_cv_func_modfl_works=no],
+          [case "$host_os" in
+                                 # Guess yes on glibc systems.
+             *-gnu* | gnu*)      gl_cv_func_modfl_works="guessing yes" ;;
+                                 # Guess yes on musl systems.
+             *-musl* | midipix*) gl_cv_func_modfl_works="guessing yes" ;;
+                                 # Guess yes on native Windows.
+             mingw* | windows*)  gl_cv_func_modfl_works="guessing yes" ;;
+                                 # If we don't know, obey --enable-cross-guesses.
+             *)                  gl_cv_func_modfl_works="$gl_cross_guess_normal" ;;
+           esac
+          ])
+        LIBS="$saved_LIBS"
+      ])
+    case "$gl_cv_func_modfl_works" in
+      *yes) ;;
+      *) REPLACE_MODFL=1 ;;
+    esac
     m4_ifdef([gl_FUNC_MODFL_IEEE], [
       if test $gl_modfl_required = ieee && test $REPLACE_MODFL = 0; then
         AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
         AC_CACHE_CHECK([whether modfl works according to ISO C 99 with IEC 60559],
           [gl_cv_func_modfl_ieee],
           [
-            save_LIBS="$LIBS"
+            saved_LIBS="$LIBS"
             LIBS="$LIBS $MODFL_LIBM"
             AC_RUN_IFELSE(
               [AC_LANG_SOURCE([[
@@ -68,7 +112,8 @@ int main (int argc, char *argv[])
                                      # Guess yes on musl systems.
                  *-musl* | midipix*) gl_cv_func_modfl_ieee="guessing yes" ;;
                                      # Guess yes on MSVC, no on mingw.
-                 mingw*)             AC_EGREP_CPP([Known], [
+                 windows*-msvc*)     gl_cv_func_modfl_ieee="guessing yes" ;;
+                 mingw* | windows*)  AC_EGREP_CPP([Known], [
 #ifdef _MSC_VER
  Known
 #endif
@@ -80,7 +125,7 @@ int main (int argc, char *argv[])
                  *)                  gl_cv_func_modfl_ieee="$gl_cross_guess_normal" ;;
                esac
               ])
-            LIBS="$save_LIBS"
+            LIBS="$saved_LIBS"
           ])
         case "$gl_cv_func_modfl_ieee" in
           *yes) ;;

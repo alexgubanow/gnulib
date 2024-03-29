@@ -1,5 +1,5 @@
 /* Grapheme cluster break function test.
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify it
    under the terms of the GNU Lesser General Public License as published
@@ -27,7 +27,7 @@
 
 #include "macros.h"
 
-static const char *
+_GL_UNUSED static const char *
 graphemebreakproperty_to_string (int gbp)
 {
   printf ("%d\n", gbp);
@@ -75,19 +75,20 @@ test_uc_grapheme_breaks (const char *expected, ucs4_t *s, size_t n,
 
         fprintf (stderr, "   input:");
         for (j = 0; j < n; j++)
-          fprintf (stderr, " %02x", s[j]);
+          fprintf (stderr, " %04X", s[j]);
         putc ('\n', stderr);
 
         fprintf (stderr, "expected:");
         for (j = 0; j < n; j++)
-          fprintf (stderr, "  %d", expected[j] == '#');
+          fprintf (stderr, "    %d", expected[j] == '#');
         putc ('\n', stderr);
 
         fprintf (stderr, "  actual:");
         for (j = 0; j < n; j++)
-          fprintf (stderr, "  %d", breaks[j]);
+          fprintf (stderr, "    %d", breaks[j]);
         putc ('\n', stderr);
 
+        fflush (stderr);
         abort ();
       }
 }

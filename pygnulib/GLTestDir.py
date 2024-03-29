@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2023 Free Software Foundation, Inc.
+# Copyright (C) 2002-2024 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 #===============================================================================
 # Define global imports
 #===============================================================================
@@ -21,6 +23,8 @@ import re
 import sys
 import codecs
 import subprocess as sp
+import shutil
+from pathlib import Path
 from . import constants
 from .GLError import GLError
 from .GLConfig import GLConfig
@@ -50,10 +54,41 @@ TESTS = constants.TESTS
 joinpath = constants.joinpath
 relinverse = constants.relinverse
 copyfile = constants.copyfile
+ensure_writable = constants.ensure_writable
 movefile = constants.movefile
+lines_to_multiline = constants.lines_to_multiline
 isdir = os.path.isdir
 isfile = os.path.isfile
 normpath = os.path.normpath
+
+
+def _patch_test_driver() -> None:
+    '''Patch the test-driver script in testdirs.'''
+    test_driver = joinpath('build-aux', 'test-driver')
+    print('patching file %s' % test_driver)
+    diffs = [ joinpath(DIRS['root'], name)
+              for name in [joinpath('build-aux', 'test-driver.diff'),
+                           joinpath('build-aux', 'test-driver-1.16.3.diff')]]
+    patched = False
+    for diff in diffs:
+        command = f'patch {test_driver} < {diff}'
+        try:
+            result = sp.call(command, shell=True, stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+        except OSError:
+            if isfile(f'{test_driver}.orig'):
+                os.remove(f'{test_driver}.orig')
+            if isfile(f'{test_driver}.rej'):
+                os.remove(f'{test_driver}.rej')
+            raise GLError(20, None)
+        if result == 0:
+            patched = True
+            break
+        if isfile(f'{test_driver}.orig'):
+            os.remove(f'{test_driver}.orig')
+        if isfile(f'{test_driver}.rej'):
+            os.remove(f'{test_driver}.rej')
+    if not patched:
+        raise GLError(20, None)
 
 
 #===============================================================================
@@ -63,10 +98,8 @@ class GLTestDir(object):
     '''GLTestDir class is used to create a scratch package with the given
     list of the modules.'''
 
-    def __init__(self, config, testdir):
-        '''GLTestDir.__init__(config, testdir) -> GLTestDir
-
-        Create new GLTestDir instance.'''
+    def __init__(self, config: GLConfig, testdir: str) -> None:
+        '''Create new GLTestDir instance.'''
         if type(config) is not GLConfig:
             raise TypeError('config must be a GLConfig, not %s'
                             % type(config).__name__)
@@ -97,11 +130,9 @@ class GLTestDir(object):
         self.config.resetWitnessCMacro()
         self.config.resetVCFiles()
 
-    def rewrite_files(self, files):
-        '''GLTestDir.rewrite_files(files)
-
-        Replace auxdir, docbase, sourcebase, m4base and testsbase from default
-        to their version from config.'''
+    def rewrite_files(self, files: list[str]) -> list[str]:
+        '''Replace auxdir, docbase, sourcebase, m4base and testsbase from
+        default to their version from config.'''
         if type(files) is not list:
             raise TypeError('files argument must have list type, not %s'
                             % type(files).__name__)
@@ -136,10 +167,8 @@ class GLTestDir(object):
         result = sorted(set(result))
         return list(result)
 
-    def execute(self):
-        '''GLTestDir.execute()
-
-        Create a scratch package with the given modules.'''
+    def execute(self) -> None:
+        '''Create a scratch package with the given modules.'''
         auxdir = self.config['auxdir']
         sourcebase = self.config['sourcebase']
         m4base = self.config['m4base']
@@ -158,14 +187,15 @@ class GLTestDir(object):
         if len(specified_modules) == 0:
             # All modules together.
             # Except config-h, which breaks all modules which use HAVE_CONFIG_H.
-            # Except non-recursive-gnulib-prefix-hack, which represents a
-            # nonstandard way of using Automake.
-            # Except mountlist, which aborts the configuration on mingw.
-            # Except lib-ignore, which leads to link errors when Sun C++ is used.
+            # Except non-recursive-gnulib-prefix-hack, which represents a nonstandard
+            # way of using Automake.
+            # Except timevar, which lacks the required file timevar.def.
+            # Except mountlist, which aborts the configuration on mingw. FIXME.
+            # Except lib-ignore, which leads to link errors when Sun C++ is used. FIXME.
             specified_modules = self.modulesystem.list()
             specified_modules = [module
                                  for module in specified_modules
-                                 if module not in ['config-h', 'non-recursive-gnulib-prefix-hack',
+                                 if module not in ['config-h', 'non-recursive-gnulib-prefix-hack', 'timevar',
                                                    'mountlist', 'lib-ignore']]
 
         # Canonicalize the list of specified modules.
@@ -203,16 +233,16 @@ class GLTestDir(object):
                                        'public domain', 'unlimited', 'unmodifiable license text']:
                         incompatible = False
                         if requested_licence == 'GPLv3+' or requested_licence == 'GPL':
-                            if license not in ['LGPLv2+', 'LGPLv3+ or GPLv2', 'LGPLv3+', 'LGPL', 'GPLv2+', 'GPLv3+', 'GPL']:
+                            if license not in ['LGPLv2+', 'LGPLv3+ or GPLv2+', 'LGPLv3+', 'LGPL', 'GPLv2+', 'GPLv3+', 'GPL']:
                                 incompatible = True
                         elif requested_licence == 'GPLv2+':
-                            if license not in ['LGPLv2+', 'LGPLv3+ or GPLv2', 'GPLv2+']:
+                            if license not in ['LGPLv2+', 'LGPLv3+ or GPLv2+', 'GPLv2+']:
                                 incompatible = True
                         elif requested_licence == 'LGPLv3+' or requested_licence == 'LGPL':
-                            if license not in ['LGPLv2+', 'LGPLv3+ or GPLv2', 'LGPLv3+', 'LGPL']:
+                            if license not in ['LGPLv2+', 'LGPLv3+ or GPLv2+', 'LGPLv3+', 'LGPL']:
                                 incompatible = True
-                        elif requested_licence == 'LGPLv3+ or GPLv2':
-                            if license not in ['LGPLv2+', 'LGPLv3+ or GPLv2']:
+                        elif requested_licence == 'LGPLv3+ or GPLv2+':
+                            if license not in ['LGPLv2+', 'LGPLv3+ or GPLv2+']:
                                 incompatible = True
                         elif requested_licence == 'LGPLv2+':
                             if license not in ['LGPLv2+']:
@@ -230,15 +260,17 @@ class GLTestDir(object):
         if verbose >= 0:
             bold_on = ''
             bold_off = ''
-            term = os.getenv('TERM')
-            if term == 'xterm':
-                bold_on = '\x1b[1m'
-                bold_off = '\x1b[0m'
+            term = os.getenv('TERM', '')
+            if term.startswith('xterm') and os.isatty(1):
+                bold_on = '\033[1m'
+                bold_off = '\033[0m'
             print('Module list with included dependencies (indented):')
+            specified_modules_set = { str(module)
+                                      for module in specified_modules }
             for module in final_modules:
-                if str(module) in self.config.getModules():
+                if str(module) in specified_modules_set:
                     print('  %s%s%s' % (bold_on, module, bold_off))
-                else:  # if str(module) not in self.config.getModules()
+                else:  # if str(module) not in specified_modules_set
                     print('    %s' % module)
 
         # Generate lists of the modules.
@@ -276,31 +308,37 @@ class GLTestDir(object):
 
         # Show banner notice of every module.
         if single_configure:
-            for module in main_modules:
-                notice = module.getNotice()
-                if notice:
-                    print('Notice from module %s:' % str(module))
-                    pattern = re.compile('^(.*)$', re.M)
-                    notice = pattern.sub('  \\1', notice)
-                    print(notice)
+            if verbose >= -1:
+                for module in main_modules:
+                    notice = module.getNotice().strip('\n')
+                    if notice:
+                        print('Notice from module %s:' % str(module))
+                        pattern = re.compile(r'^(.*)$', re.M)
+                        notice = pattern.sub(r'  \1', notice)
+                        print(notice)
         else:  # if not single_configure
-            for module in modules:
-                notice = module.getNotice()
-                if notice:
-                    print('Notice from module %s:' % str(module))
-                    pattern = re.compile('^(.*)$', re.M)
-                    notice = pattern.sub('  \\1', notice)
-                    print(notice)
+            if verbose >= -1:
+                for module in modules:
+                    notice = module.getNotice().strip('\n')
+                    if notice:
+                        print('Notice from module %s:' % str(module))
+                        pattern = re.compile(r'^(.*)$', re.M)
+                        notice = pattern.sub(r'  \1', notice)
+                        print(notice)
 
         # Determine final file list.
         if single_configure:
             main_filelist, tests_filelist = \
                 moduletable.filelist_separately(main_modules, tests_modules)
-            filelist = sorted(set(main_filelist + tests_filelist))
         else:  # if not single_configure
-            filelist = moduletable.filelist(modules)
+            main_modules = modules
+            tests_modules = [ module
+                              for module in modules
+                              if module.repeatModuleInTests() ]
+            main_filelist, tests_filelist = \
+                moduletable.filelist_separately(main_modules, tests_modules)
 
-        filelist = sorted(set(filelist))
+        filelist = sorted(set(main_filelist + tests_filelist))
 
         # Print list of files.
         if verbose >= 0:
@@ -322,7 +360,7 @@ class GLTestDir(object):
                        for file in self.rewrite_files(filelist)]
         directories = sorted(set(directories))
 
-        # Copy files or make symbolic links.
+        # Copy files or make symbolic links or hard links.
         filetable = list()
         for src in filelist:
             dest = self.rewrite_files([src])[-1]
@@ -341,11 +379,15 @@ class GLTestDir(object):
                 os.remove(destpath)
             if flag:
                 copyfile(lookedup, destpath)
+                ensure_writable(destpath)
             else:  # if not flag
                 if self.filesystem.shouldLink(src, lookedup) == CopyAction.Symlink:
                     constants.link_relative(lookedup, destpath)
+                elif self.filesystem.shouldLink(src, lookedup) == CopyAction.Hardlink:
+                    constants.hardlink(lookedup, destpath)
                 else:
                     copyfile(lookedup, destpath)
+                    ensure_writable(destpath)
 
         # Create $sourcebase/Makefile.am.
         for_test = True
@@ -354,14 +396,13 @@ class GLTestDir(object):
             os.mkdir(directory)
         destfile = joinpath(directory, 'Makefile.am')
         if single_configure:
-            emit, uses_subdirs = self.emitter.lib_Makefile_am(destfile, main_modules,
-                                                              moduletable, self.makefiletable, '', for_test)
+            emit = self.emitter.lib_Makefile_am(destfile, main_modules,
+                                                moduletable, self.makefiletable, '', for_test)
         else:  # if not single_configure
-            emit, uses_subdirs = self.emitter.lib_Makefile_am(destfile, modules,
-                                                              moduletable, self.makefiletable, '', for_test)
+            emit = self.emitter.lib_Makefile_am(destfile, modules,
+                                                moduletable, self.makefiletable, '', for_test)
         with codecs.open(destfile, 'wb', 'UTF-8') as file:
             file.write(emit)
-        any_uses_subdirs = uses_subdirs
 
         # Create $m4base/Makefile.am.
         directory = joinpath(self.testdir, m4base)
@@ -391,8 +432,8 @@ class GLTestDir(object):
                 # Create $testsbase/Makefile.am.
                 destfile = joinpath(directory, 'Makefile.am')
                 witness_macro = '%stests_WITNESS' % macro_prefix
-                emit, uses_subdirs = self.emitter.tests_Makefile_am(destfile,
-                                                                    tests_modules, self.makefiletable, witness_macro, for_test)
+                emit = self.emitter.tests_Makefile_am(destfile, tests_modules, moduletable,
+                                                      self.makefiletable, witness_macro, for_test)
                 with codecs.open(destfile, 'wb', 'UTF-8') as file:
                     file.write(emit)
             else:  # if not single_configure
@@ -400,12 +441,13 @@ class GLTestDir(object):
                 destfile = joinpath(directory, 'Makefile.am')
                 libtests = False
                 self.config.setLibtests(False)
-                emit, uses_subdirs = self.emitter.tests_Makefile_am(destfile,
-                                                                    modules, self.makefiletable, '', for_test)
+                emit = self.emitter.tests_Makefile_am(destfile, modules, moduletable,
+                                                      self.makefiletable, '', for_test)
                 with codecs.open(destfile, 'wb', 'UTF-8') as file:
                     file.write(emit)
                 # Viewed from the $testsbase subdirectory, $auxdir is different.
                 emit = ''
+                saved_auxdir = auxdir
                 auxdir = os.path.normpath(joinpath(relinverse(testsbase), auxdir))
                 self.config.setAuxDir(auxdir)
                 # Create $testsbase/configure.ac.
@@ -419,8 +461,6 @@ class GLTestDir(object):
                 emit += 'AC_PROG_INSTALL\n'
                 emit += 'AC_PROG_MAKE_SET\n'
                 emit += self.emitter.preEarlyMacros(False, '', modules)
-                if uses_subdirs:
-                    emit += 'AM_PROG_CC_C_O\n\n'
                 snippets = list()
                 for module in modules:
                     if str(module) in ['gnumakefile', 'maintainer-makefile']:
@@ -432,15 +472,15 @@ class GLTestDir(object):
                         lines = [ line
                                   for line in snippet.split('\n')
                                   if line.strip() ]
-                        snippet = '\n'.join(lines)
-                        pattern = re.compile('AC_REQUIRE\\(\\[([^()]*)\\]\\)', re.M)
-                        snippet = pattern.sub('\\1', snippet)
+                        snippet = lines_to_multiline(lines)
+                        pattern = re.compile(r'AC_REQUIRE\(\[([^()]*)\]\)', re.M)
+                        snippet = pattern.sub(r'\1', snippet)
                         snippet = snippet.strip()
                         snippets += [snippet]
                 snippets = [ snippet
                              for snippet in snippets
                              if snippet.strip()]
-                emit += '%s\n' % '\n'.join(snippets)
+                emit += lines_to_multiline(snippets)
                 if libtool:
                     emit += 'LT_INIT([win32-dll])\n'
                     emit += 'LT_LANG([C++])\n'
@@ -462,19 +502,19 @@ class GLTestDir(object):
                 emit += 'AC_DEFUN([gl_INIT], [\n'
                 replace_auxdir = True
                 emit += "gl_m4_base='../%s'\n" % m4base
-                emit += self.emitter.initmacro_start(macro_prefix)
+                emit += self.emitter.initmacro_start(macro_prefix, True)
                 # We don't have explicit ordering constraints between the various
                 # autoconf snippets. It's cleanest to put those of the library before
                 # those of the tests.
-                emit += "gl_source_base='../%s'\n" % sourcebase
-                emit += self.emitter.autoconfSnippets(modules,
+                emit += self.emitter.shellvars_init(True, f'../{sourcebase}')
+                emit += self.emitter.autoconfSnippets(modules, modules,
                                                       moduletable, 1, False, False, False,
                                                       replace_auxdir)
-                emit += "gl_source_base='.'"
-                emit += self.emitter.autoconfSnippets(modules,
+                emit += self.emitter.shellvars_init(True, '.')
+                emit += self.emitter.autoconfSnippets(modules, modules,
                                                       moduletable, 2, False, False, False,
                                                       replace_auxdir)
-                emit += self.emitter.initmacro_end(macro_prefix)
+                emit += self.emitter.initmacro_end(macro_prefix, True)
                 # _LIBDEPS and _LTLIBDEPS variables are not needed if this library is
                 # created using libtool, because libtool already handles the
                 # dependencies.
@@ -509,7 +549,7 @@ class GLTestDir(object):
 
         # Create Makefile.am.
         emit = '## Process this file with automake to produce Makefile.in.\n\n'
-        emit += 'AUTOMAKE_OPTIONS = 1.9.6 foreign\n\n'
+        emit += 'AUTOMAKE_OPTIONS = 1.14 foreign\n\n'
         emit += 'SUBDIRS = %s\n\n' % ' '.join(subdirs)
         emit += 'ACLOCAL_AMFLAGS = -I %s\n' % m4base
         emit = constants.nlconvert(emit)
@@ -536,8 +576,6 @@ class GLTestDir(object):
         emit += 'm4_pattern_allow([^gl_LIBOBJS$])dnl a variable\n'
         emit += 'm4_pattern_allow([^gl_LTLIBOBJS$])dnl a variable\n'
         emit += self.emitter.preEarlyMacros(False, '', modules)
-        if any_uses_subdirs:
-            emit += 'AM_PROG_CC_C_O\n'
         snippets = list()
         for module in final_modules:
             if single_configure:
@@ -549,15 +587,15 @@ class GLTestDir(object):
                 lines = [ line
                           for line in snippet.split('\n')
                           if line.strip() ]
-                snippet = '\n'.join(lines)
-                pattern = re.compile('AC_REQUIRE\\(\\[([^()]*)\\]\\)', re.M)
-                snippet = pattern.sub('\\1', snippet)
+                snippet = lines_to_multiline(lines)
+                pattern = re.compile(r'AC_REQUIRE\(\[([^()]*)\]\)', re.M)
+                snippet = pattern.sub(r'\1', snippet)
                 snippet = snippet.strip()
                 snippets += [snippet]
         snippets = [ snippet
                      for snippet in snippets
                      if snippet.strip() ]
-        emit += '%s\n' % '\n'.join(snippets)
+        emit += lines_to_multiline(snippets)
         if libtool:
             emit += 'LT_INIT([win32-dll])\n'
             emit += 'LT_LANG([C++])\n'
@@ -582,31 +620,31 @@ class GLTestDir(object):
         else:  # auxdir == 'build-aux'
             replace_auxdir = False
         emit += 'gl_m4_base=\'%s\'\n' % m4base
-        emit += self.emitter.initmacro_start(macro_prefix)
-        emit += 'gl_source_base=\'%s\'\n' % sourcebase
+        emit += self.emitter.initmacro_start(macro_prefix, False)
+        emit += self.emitter.shellvars_init(False, sourcebase)
         if single_configure:
-            emit += self.emitter.autoconfSnippets(main_modules, moduletable,
-                                                  0, False, False, False, replace_auxdir)
+            emit += self.emitter.autoconfSnippets(main_modules, main_modules, moduletable,
+                                                  0, True, False, False, replace_auxdir)
         else:  # if not single_configure
-            emit += self.emitter.autoconfSnippets(modules, moduletable,
-                                                  1, False, False, False, replace_auxdir)
-        emit += self.emitter.initmacro_end(macro_prefix)
+            emit += self.emitter.autoconfSnippets(modules, modules, moduletable,
+                                                  1, True, False, False, replace_auxdir)
+        emit += self.emitter.initmacro_end(macro_prefix, False)
         if single_configure:
             emit += '  gltests_libdeps=\n'
             emit += '  gltests_ltlibdeps=\n'
-            emit += self.emitter.initmacro_start('%stests' % macro_prefix)
-            emit += '  gl_source_base=\'%s\'\n' % testsbase
+            emit += self.emitter.initmacro_start('%stests' % macro_prefix, True)
+            emit += self.emitter.shellvars_init(True, testsbase)
             # Define a tests witness macro.
             emit += '  %stests_WITNESS=IN_GNULIB_TESTS\n' % macro_prefix
             emit += '  AC_SUBST([%stests_WITNESS])\n' % macro_prefix
             emit += '  gl_module_indicator_condition=$%stests_WITNESS\n' % macro_prefix
             emit += '  m4_pushdef([gl_MODULE_INDICATOR_CONDITION], '
             emit += '[$gl_module_indicator_condition])\n'
-            snippets = self.emitter.autoconfSnippets(tests_modules, moduletable,
-                                                     1, True, False, False, replace_auxdir)
-            emit += snippets.strip()
+            snippets = self.emitter.autoconfSnippets(tests_modules, main_modules + tests_modules,
+                                                     moduletable, 0, True, False, False, replace_auxdir)
+            emit += snippets
             emit += '  m4_popdef([gl_MODULE_INDICATOR_CONDITION])\n'
-            emit += self.emitter.initmacro_end('%stests' % macro_prefix)
+            emit += self.emitter.initmacro_end('%stests' % macro_prefix, True)
         # _LIBDEPS and _LTLIBDEPS variables are not needed if this library is
         # created using libtool, because libtool already handles the dependencies.
         if not libtool:
@@ -644,6 +682,7 @@ class GLTestDir(object):
         # Create autogenerated files.
         # Do not use "${AUTORECONF} --force --install", because it may invoke
         # autopoint, which brings in older versions of some of our .m4 files.
+        constants.force_output()
         os.chdir(self.testdir)
         # gettext
         if isfile(joinpath(m4base, 'gettext.m4')):
@@ -664,6 +703,7 @@ class GLTestDir(object):
         args = [UTILS['aclocal'], '-I', m4base]
         constants.execute(args, verbose)
         if not isdir('build-aux'):
+            print('executing mkdir build-aux')
             os.mkdir('build-aux')
         # autoconf
         args = [UTILS['autoconf']]
@@ -671,9 +711,13 @@ class GLTestDir(object):
         # autoheader
         args = [UTILS['autoheader']]
         constants.execute(args, verbose)
+        # Explicit 'touch config.h.in': see <https://savannah.gnu.org/support/index.php?109406>.
+        print('executing touch config.h.in')
+        Path('config.h.in').touch()
         # automake
         args = [UTILS['automake'], '--add-missing', '--copy']
         constants.execute(args, verbose)
+        shutil.rmtree('autom4te.cache')
         os.chdir(DIRS['cwd'])
         if inctests and not single_configure:
             # Do not use "${AUTORECONF} --force --install", because it may invoke
@@ -694,6 +738,7 @@ class GLTestDir(object):
             args = [UTILS['aclocal'], '-I', joinpath('..', m4base)]
             constants.execute(args, verbose)
             if not isdir(joinpath('../build-aux')):
+                print('executing mkdir ../build-aux')
                 os.mkdir('../build-aux')
             # autoconf
             args = [UTILS['autoconf']]
@@ -701,9 +746,13 @@ class GLTestDir(object):
             # autoheader
             args = [UTILS['autoheader']]
             constants.execute(args, verbose)
+            # Explicit 'touch config.h.in': see <https://savannah.gnu.org/support/index.php?109406>.
+            print('executing touch config.h.in')
+            Path('config.h.in').touch()
             # automake
             args = [UTILS['automake'], '--add-missing', '--copy']
             constants.execute(args, verbose)
+            shutil.rmtree('autom4te.cache')
             os.chdir(DIRS['cwd'])
 
         # Need to run configure and make once, to create built files that are to be
@@ -712,22 +761,17 @@ class GLTestDir(object):
         with codecs.open(path, 'rb', 'UTF-8') as file:
             snippet = file.read()
         snippet = constants.remove_backslash_newline(snippet)
-        cleaned_files = list()
-        tests_cleaned_files = list()
-        built_sources = list()
-        tests_built_sources = list()
-        distributed_built_sources = list()
-        tests_distributed_built_sources = list()
 
         # Extract the value of "CLEANFILES += ..." and "MOSTLYCLEANFILES += ...".
         regex_find = list()
-        pattern = re.compile('^CLEANFILES[\t ]*\\+=(.*)$', re.M)
+        pattern = re.compile(r'^CLEANFILES[\t ]*\+=(.*)$', re.M)
         regex_find += pattern.findall(snippet)
-        pattern = re.compile('^MOSTLYCLEANFILES[\t ]*\\+=(.*)$', re.M)
+        pattern = re.compile(r'^MOSTLYCLEANFILES[\t ]*\+=(.*)$', re.M)
         regex_find += pattern.findall(snippet)
         regex_find = [ line.strip()
                        for line in regex_find
                        if line.strip() ]
+        cleaned_files = []
         for part in regex_find:
             cleaned_files += \
                 [ line.strip()
@@ -737,11 +781,12 @@ class GLTestDir(object):
         # Extract the value of "BUILT_SOURCES += ...". Remove variable references
         # such $(FOO_H) because they don't refer to distributed files.
         regex_find = list()
-        pattern = re.compile('^BUILT_SOURCES[\t ]*\\+=(.*)$', re.M)
+        pattern = re.compile(r'^BUILT_SOURCES[\t ]*\+=(.*)$', re.M)
         regex_find += pattern.findall(snippet)
         regex_find = [ line.strip()
                        for line in regex_find
                        if line.strip()]
+        built_sources = []
         for part in regex_find:
             built_sources += \
                 [ line.strip()
@@ -749,11 +794,12 @@ class GLTestDir(object):
                   if line.strip()]
         built_sources = [ line
                           for line in built_sources
-                          if not bool(re.compile('[$]\\([A-Za-z0-9_]*\\)$').findall(line)) ]
+                          if not bool(re.compile(r'[$]\([A-Za-z0-9_]*\)$').findall(line)) ]
         distributed_built_sources = [ file
                                       for file in built_sources
                                       if file not in cleaned_files ]
 
+        tests_distributed_built_sources = []
         if inctests:
             # Likewise for built files in the $testsbase directory.
             path = joinpath(self.testdir, testsbase, 'Makefile.am')
@@ -763,13 +809,14 @@ class GLTestDir(object):
 
             # Extract the value of "CLEANFILES += ..." and "MOSTLYCLEANFILES += ...".
             regex_find = list()
-            pattern = re.compile('^CLEANFILES[\t ]*\\+=(.*)$', re.M)
+            pattern = re.compile(r'^CLEANFILES[\t ]*\+=(.*)$', re.M)
             regex_find += pattern.findall(snippet)
-            pattern = re.compile('^MOSTLYCLEANFILES[\t ]*\\+=(.*)$', re.M)
+            pattern = re.compile(r'^MOSTLYCLEANFILES[\t ]*\+=(.*)$', re.M)
             regex_find += pattern.findall(snippet)
             regex_find = [ line.strip()
                            for line in regex_find
                            if line.strip() ]
+            tests_cleaned_files = []
             for part in regex_find:
                 tests_cleaned_files += \
                     [ line.strip()
@@ -779,12 +826,12 @@ class GLTestDir(object):
             # Extract the value of "BUILT_SOURCES += ...". Remove variable references
             # such $(FOO_H) because they don't refer to distributed files.
             regex_find = list()
-            tests_built_sources = list()
-            pattern = re.compile('^BUILT_SOURCES[\t ]*\\+=(.*)$', re.M)
+            pattern = re.compile(r'^BUILT_SOURCES[\t ]*\+=(.*)$', re.M)
             regex_find += pattern.findall(snippet)
             regex_find = [ line.strip()
                            for line in regex_find
                            if line.strip() ]
+            tests_built_sources = []
             for part in regex_find:
                 tests_built_sources += \
                     [ line.strip()
@@ -792,13 +839,14 @@ class GLTestDir(object):
                       if line.strip() ]
             tests_built_sources = [ line
                                     for line in tests_built_sources
-                                    if not bool(re.compile('[$]\\([A-Za-z0-9_]*\\)$').findall(line)) ]
+                                    if not bool(re.compile(r'[$]\([A-Za-z0-9_]*\)$').findall(line)) ]
             tests_distributed_built_sources = [ file
                                                 for file in tests_built_sources
-                                                if file not in cleaned_files]
+                                                if file not in tests_cleaned_files]
 
+        os.chdir(self.testdir)
         if distributed_built_sources or tests_distributed_built_sources:
-            os.chdir(self.testdir)
+            constants.force_output()
             sp.call('./configure')
             if distributed_built_sources:
                 os.chdir(sourcebase)
@@ -836,6 +884,9 @@ class GLTestDir(object):
                     'LIBTOOLIZE=%s' % UTILS['libtoolize'],
                     'distclean']
             sp.call(args)
+        if isfile(joinpath('build-aux', 'test-driver')):
+            _patch_test_driver()
+        os.chdir(DIRS['cwd'])
         sp.call(['rm', '-rf', self.config['tempdir']], shell=False)
 
 
@@ -846,10 +897,8 @@ class GLMegaTestDir(object):
     '''GLMegaTestDir class is used to create a mega scratch package with the
     given modules one by one and all together.'''
 
-    def __init__(self, config, megatestdir):
-        '''GLMegaTestDir.__init__(config, megatestdir) -> GLMegaTestDir
-
-        Create new GLTestDir instance.'''
+    def __init__(self, config: GLConfig, megatestdir: str) -> None:
+        '''Create new GLTestDir instance.'''
         if type(config) is not GLConfig:
             raise TypeError('config must be a GLConfig, not %s'
                             % type(config).__name__)
@@ -869,11 +918,9 @@ class GLMegaTestDir(object):
         self.assistant = GLFileAssistant(self.config)
         self.makefiletable = GLMakefileTable(self.config)
 
-    def execute(self):
-        '''GLMegaTestDir.execute()
-
-        Create a mega scratch package with the given modules one by one and all
-        together.'''
+    def execute(self) -> None:
+        '''Create a mega scratch package with the given modules one by one
+        and all together.'''
         auxdir = self.config['auxdir']
         verbose = self.config['verbosity']
 
@@ -889,7 +936,7 @@ class GLMegaTestDir(object):
         # First, all modules one by one.
         for module in modules:
             self.config.setModules([str(module)])
-            #GLTestDir(self.config, self.megatestdir).execute()
+            GLTestDir(self.config, joinpath(self.megatestdir, str(module))).execute()
             megasubdirs += [str(module)]
 
         # Then, all modules all together.
@@ -899,7 +946,7 @@ class GLMegaTestDir(object):
                     if str(module) != 'config-h' ]
         self.config.setModules([ str(module)
                                  for module in modules ])
-        #GLTestDir(self.config, self.megatestdir).execute()
+        GLTestDir(self.config, joinpath(self.megatestdir, 'ALL')).execute()
         megasubdirs += ['ALL']
 
         # Create autobuild.
@@ -918,6 +965,8 @@ class GLMegaTestDir(object):
         repdict['Nov'] = repdict['November'] = '11'
         repdict['Dec'] = repdict['December'] = '12'
         vc_witness = joinpath(DIRS['root'], '.git', 'refs', 'heads', 'master')
+        if not isfile(vc_witness):
+            vc_witness = joinpath(DIRS['root'], 'ChangeLog')
         mdate_sh = joinpath(DIRS['root'], 'build-aux', 'mdate-sh')
         args = ['sh', mdate_sh, vc_witness]
         cvsdate = sp.check_output(args).decode("UTF-8").strip()
@@ -957,7 +1006,7 @@ class GLMegaTestDir(object):
 
         # Create Makefile.am.
         emit = '## Process this file with automake to produce Makefile.in.\n\n'
-        emit += 'AUTOMAKE_OPTIONS = 1.9.6 foreign\n\n'
+        emit += 'AUTOMAKE_OPTIONS = 1.14 foreign\n\n'
         emit += 'SUBDIRS = %s\n\n' % ' '.join(megasubdirs)
         emit += 'EXTRA_DIST = do-autobuild\n'
         emit = constants.nlconvert(emit)
@@ -967,25 +1016,27 @@ class GLMegaTestDir(object):
 
         emit = '# Process this file with autoconf '
         emit += 'to produce a configure script.\n'
-        emit += 'AC_INIT([dummy], [0])\n\n'
+        emit += 'AC_INIT([dummy], [0])\n'
         if auxdir != '.':
             emit += 'AC_CONFIG_AUX_DIR([%s])\n' % auxdir
         emit += 'AM_INIT_AUTOMAKE\n\n'
         emit += 'AC_PROG_MAKE_SET\n\n'
-        emit += 'AC_CONFIG_SUBDIRS([%s])\n' % ' '.megasubdirs
+        emit += 'AC_CONFIG_SUBDIRS([%s])\n' % ' '.join(megasubdirs)
         emit += 'AC_CONFIG_FILES([Makefile])\n'
         emit += 'AC_OUTPUT\n'
         emit = constants.nlconvert(emit)
-        path = joinpath(self.megatestdir, 'Makefile.am')
+        path = joinpath(self.megatestdir, 'configure.ac')
         with codecs.open(path, 'wb', 'UTF-8') as file:
             file.write(emit)
 
         # Create autogenerated files.
-        os.chdir(DIRS['cwd'])
+        constants.force_output()
+        os.chdir(self.megatestdir)
         args = [UTILS['aclocal']]
         constants.execute(args, verbose)
         try:  # Try to make a directory
             if not isdir('build-aux'):
+                print('executing mkdir build-aux')
                 os.mkdir('build-aux')
         except Exception as error:
             pass
@@ -993,4 +1044,8 @@ class GLMegaTestDir(object):
         constants.execute(args, verbose)
         args = [UTILS['automake'], '--add-missing', '--copy']
         constants.execute(args, verbose)
+        shutil.rmtree('autom4te.cache')
+        if isfile(joinpath('build-aux', 'test-driver')):
+            _patch_test_driver()
+        os.chdir(DIRS['cwd'])
         sp.call(['rm', '-rf', self.config['tempdir']], shell=False)

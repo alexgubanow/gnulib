@@ -1,5 +1,5 @@
 /* Type-safe stack data type.
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
      Initialization:     stack_init (&stack);
      De-initialization:  stack_destroy (&stack);
      Predicate:          bool res = stack_empty (&stack);
-     Introspection:      ELEMENT *base = stack_base (&stack);
+     Introspection:      ELEMENT *base = stack_current_base (&stack);
      Pushing:            stack_push (&stack, element);
      Popping:            ELEMENT element = stack_pop (&stack);
      Discarding:         stack_discard (&stack);

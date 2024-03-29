@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2023 Free Software Foundation, Inc.
+ * Copyright (C) 2011-2024 Free Software Foundation, Inc.
  * Written by Ben Walton.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,9 @@
 #include <unistd.h>
 
 #include "signature.h"
+#if !((defined __APPLE__ && defined __MACH__) || defined __FreeBSD__ || defined __sgi || defined __sun)
 SIGNATURE_CHECK (sethostname, int, (const char *, size_t));
+#endif
 
 int do_dangerous_things;
 

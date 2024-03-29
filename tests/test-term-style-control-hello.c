@@ -1,5 +1,5 @@
 /* Simple test program for the term-style-control module.
-   Copyright (C) 2019-2023 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2019.
 
    This program is free software: you can redistribute it and/or modify
@@ -56,7 +56,7 @@ get_control_data (struct term_style_user_data *user_data)
 }
 
 static void
-restore (struct term_style_user_data *user_data)
+restore (_GL_UNUSED struct term_style_user_data *user_data)
 {
   fputs (set_underline_off, stdout);
   fputs (set_background_color_default, stdout);
@@ -64,7 +64,7 @@ restore (struct term_style_user_data *user_data)
 }
 
 static _GL_ASYNC_SAFE void
-async_restore (struct term_style_user_data *user_data)
+async_restore (_GL_UNUSED struct term_style_user_data *user_data)
 {
   /* No <stdio.h> calls here!  */
   full_write (STDOUT_FILENO, set_underline_off,
@@ -94,7 +94,7 @@ static const struct term_style_controller controller =
 };
 
 int
-main (int argc, char *argv[])
+main ()
 {
   struct term_style_user_data user_data;
 

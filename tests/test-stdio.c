@@ -1,5 +1,5 @@
 /* Test of <stdio.h> substitute.
-   Copyright (C) 2007, 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007, 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -39,28 +39,48 @@ va_list t5;
 
 #include <string.h>
 
-#include "nan.h"
+#include "signed-nan.h"
+#include "signed-snan.h"
 #include "macros.h"
 
 int
 main (void)
 {
+  {
+    double value1;
+    char buf[64];
+
+    value1 = positive_NaNd();
+    sprintf (buf, "%g", value1);
+    ASSERT (strlen (buf) <= _PRINTF_NAN_LEN_MAX);
+
+    value1 = negative_NaNd();
+    sprintf (buf, "%g", value1);
+    ASSERT (strlen (buf) <= _PRINTF_NAN_LEN_MAX);
+  }
 #if defined DBL_EXPBIT0_WORD && defined DBL_EXPBIT0_BIT
   /* Check the value of _PRINTF_NAN_LEN_MAX.  */
   {
-    #define NWORDS \
-      ((sizeof (double) + sizeof (unsigned int) - 1) / sizeof (unsigned int))
-    typedef union { double value; unsigned int word[NWORDS]; } memory_double;
-
     double value1;
     memory_double value2;
     char buf[64];
 
-    value1 = NaNd();
+    value1 = positive_SNaNd();
     sprintf (buf, "%g", value1);
     ASSERT (strlen (buf) <= _PRINTF_NAN_LEN_MAX);
 
-    value2.value = NaNd ();
+    value1 = negative_SNaNd();
+    sprintf (buf, "%g", value1);
+    ASSERT (strlen (buf) <= _PRINTF_NAN_LEN_MAX);
+
+    value2.value = positive_NaNd ();
+    #if DBL_EXPBIT0_BIT == 20
+    value2.word[DBL_EXPBIT0_WORD] ^= 0x54321;
+    #endif
+    sprintf (buf, "%g", value2.value);
+    ASSERT (strlen (buf) <= _PRINTF_NAN_LEN_MAX);
+
+    value2.value = negative_NaNd ();
     #if DBL_EXPBIT0_BIT == 20
     value2.word[DBL_EXPBIT0_WORD] ^= 0x54321;
     #endif

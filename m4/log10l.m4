@@ -1,5 +1,5 @@
-# log10l.m4 serial 11
-dnl Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# log10l.m4 serial 15
+dnl Copyright (C) 2011-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -18,17 +18,17 @@ AC_DEFUN([gl_FUNC_LOG10L],
 
   dnl Test whether log10l() exists. Assume that log10l(), if it exists, is
   dnl defined in the same library as log10().
-  save_LIBS="$LIBS"
+  saved_LIBS="$LIBS"
   LIBS="$LIBS $LOG10_LIBM"
   AC_CHECK_FUNCS([log10l])
-  LIBS="$save_LIBS"
+  LIBS="$saved_LIBS"
   if test $ac_cv_func_log10l = yes; then
     LOG10L_LIBM="$LOG10_LIBM"
 
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $LOG10L_LIBM"
     gl_FUNC_LOG10L_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_log10l_works" in
       *yes) ;;
       *) REPLACE_LOG10L=1 ;;
@@ -60,7 +60,7 @@ dnl 0xFFF00000000000007FF0000000000000, should be
 dnl 0xFFF00000000000000000000000000000.
 dnl On AIX 5.1, log10l(-0.0L) is finite if it's not the first log10l call
 dnl in the program.
-dnl On NetBSD 9.0, the result is accurate to only 16 digits.
+dnl On NetBSD 9.3, the result is accurate to only 16 digits.
 AC_DEFUN([gl_FUNC_LOG10L_WORKS],
 [
   AC_REQUIRE([AC_PROG_CC])
@@ -115,6 +115,12 @@ long double gy;
 int main (int argc, char *argv[])
 {
   long double (* volatile my_log10l) (long double) = argc ? log10l : dummy;
+  const long double TWO_LDBL_MANT_DIG = /* 2^LDBL_MANT_DIG */
+    (long double) (1U << ((LDBL_MANT_DIG - 1) / 5))
+    * (long double) (1U << ((LDBL_MANT_DIG - 1 + 1) / 5))
+    * (long double) (1U << ((LDBL_MANT_DIG - 1 + 2) / 5))
+    * (long double) (1U << ((LDBL_MANT_DIG - 1 + 3) / 5))
+    * (long double) (1U << ((LDBL_MANT_DIG - 1 + 4) / 5));
   int result = 0;
   /* Dummy call, to trigger the AIX 5.1 bug.  */
   gx = 0.6L;
@@ -126,18 +132,20 @@ int main (int argc, char *argv[])
     if (!(gy + gy == gy))
       result |= 1;
   }
-  /* This test fails on musl 1.2.2/arm64, musl 1.2.2/s390x, NetBSD 9.0.  */
+  /* This test fails on musl 1.2.2/arm64, musl 1.2.2/s390x,
+     NetBSD 9.3 except arm64.  */
   {
-    const long double TWO_LDBL_MANT_DIG = /* 2^LDBL_MANT_DIG */
-      (long double) (1U << ((LDBL_MANT_DIG - 1) / 5))
-      * (long double) (1U << ((LDBL_MANT_DIG - 1 + 1) / 5))
-      * (long double) (1U << ((LDBL_MANT_DIG - 1 + 2) / 5))
-      * (long double) (1U << ((LDBL_MANT_DIG - 1 + 3) / 5))
-      * (long double) (1U << ((LDBL_MANT_DIG - 1 + 4) / 5));
     long double x = 7.90097792256024576L;
     long double err = (my_log10l (x) + my_log10l (1.0L / x)) * TWO_LDBL_MANT_DIG;
     if (!(err >= -100.0L && err <= 100.0L))
       result |= 2;
+  }
+  /* This test fails on NetBSD 9.3/arm64.  */
+  {
+    long double x = 13.53398352203022253L;
+    long double err = (my_log10l (x) + my_log10l (1.0L / x)) * TWO_LDBL_MANT_DIG;
+    if (!(err >= -100.0L && err <= 100.0L))
+      result |= 4;
   }
   return result;
 }
@@ -150,7 +158,7 @@ int main (int argc, char *argv[])
                                # Guess no on musl systems.
            *-musl* | midipix*) gl_cv_func_log10l_works="guessing no" ;;
                                # Guess yes on native Windows.
-           mingw*)             gl_cv_func_log10l_works="guessing yes" ;;
+           mingw* | windows*)  gl_cv_func_log10l_works="guessing yes" ;;
                                # If we don't know, obey --enable-cross-guesses.
            *)                  gl_cv_func_log10l_works="$gl_cross_guess_normal" ;;
          esac

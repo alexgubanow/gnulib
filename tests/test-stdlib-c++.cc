@@ -1,5 +1,5 @@
 /* Test of <stdlib.h> substitute in C++ mode.
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -185,6 +185,10 @@ SIGNATURE_CHECK (GNULIB_NAMESPACE::setenv, int,
 
 #if GNULIB_TEST_STRTOD
 SIGNATURE_CHECK (GNULIB_NAMESPACE::strtod, double, (const char *, char **));
+#endif
+
+#if GNULIB_TEST_STRTOF
+SIGNATURE_CHECK (GNULIB_NAMESPACE::strtof, float, (const char *, char **));
 #endif
 
 #if GNULIB_TEST_STRTOLL

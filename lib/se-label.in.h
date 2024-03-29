@@ -1,5 +1,5 @@
 /* Replacement <selinux/label.h> for platforms that lack it.
-   Copyright 2020-2023 Free Software Foundation, Inc.
+   Copyright 2020-2024 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -55,6 +55,13 @@ selabel_lookup (_GL_ATTRIBUTE_MAYBE_UNUSED struct selabel_handle *hnd,
                 _GL_ATTRIBUTE_MAYBE_UNUSED char **context,
                 _GL_ATTRIBUTE_MAYBE_UNUSED char const *key,
                 _GL_ATTRIBUTE_MAYBE_UNUSED int type)
+{ errno = ENOTSUP; return -1; }
+
+SE_LABEL_INLINE int
+selabel_lookup_raw (_GL_ATTRIBUTE_MAYBE_UNUSED struct selabel_handle *hnd,
+                    _GL_ATTRIBUTE_MAYBE_UNUSED char **context,
+                    _GL_ATTRIBUTE_MAYBE_UNUSED char const *key,
+                    _GL_ATTRIBUTE_MAYBE_UNUSED int type)
 { errno = ENOTSUP; return -1; }
 
 SE_LABEL_INLINE struct selabel_handle *

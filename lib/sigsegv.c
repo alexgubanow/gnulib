@@ -1,5 +1,5 @@
 /* Page fault handling library.
-   Copyright (C) 1993-2023 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Copyright (C) 2018  Nylon Chen <nylon7@andestech.com>
 
    This program is free software: you can redistribute it and/or modify
@@ -430,17 +430,21 @@ int libsigsegv_version = LIBSIGSEGV_VERSION;
 
 #if defined __FreeBSD_kernel__ || defined __FreeBSD__ || defined __DragonFly__ /* GNU/kFreeBSD, FreeBSD */
 
-# if defined __arm__ || defined __armhf__ || defined __arm64__
+# if defined __arm__ || defined __armhf__ || (defined __arm64__ || defined __aarch64__)
 
 #  define SIGSEGV_FAULT_HANDLER_ARGLIST  int sig, siginfo_t *sip, void *ucp
 #  define SIGSEGV_FAULT_ADDRESS  sip->si_addr
 #  define SIGSEGV_FAULT_CONTEXT  ((ucontext_t *) ucp)
 
-#  if defined __arm64__ /* 64-bit */
+#  if defined __arm64__ || defined __aarch64__ /* 64-bit */
 
 /* See sys/arm64/include/ucontext.h.  */
 
-#   define SIGSEGV_FAULT_STACKPOINTER  ((ucontext_t *) ucp)->uc_mcontext.mc_gpregs.gp_sp
+#   if defined __CHERI_PURE_CAPABILITY__
+#    define SIGSEGV_FAULT_STACKPOINTER  ((ucontext_t *) ucp)->uc_mcontext.mc_capregs.cap_sp
+#   else
+#    define SIGSEGV_FAULT_STACKPOINTER  ((ucontext_t *) ucp)->uc_mcontext.mc_gpregs.gp_sp
+#   endif
 
 #  elif defined __arm__ || defined __armhf__ /* 32-bit */
 
@@ -825,8 +829,20 @@ int libsigsegv_version = LIBSIGSEGV_VERSION;
     || defined __FreeBSD_kernel__ || defined __FreeBSD__ || defined __DragonFly__ \
     || defined __NetBSD__ || defined __OpenBSD__ \
     || (defined __APPLE__ && defined __MACH__)
-# define SIGSEGV_FOR_ALL_SIGNALS(var,body) \
-    { int var; var = SIGSEGV; { body } var = SIGBUS; { body } }
+# if defined __CHERI__
+#  define SIGSEGV_FOR_ALL_SIGNALS(var,body) \
+     { int var;                             \
+       var = SIGSEGV; { body }              \
+       var = SIGBUS; { body }               \
+       var = SIGPROT; { body }              \
+     }
+# else
+#  define SIGSEGV_FOR_ALL_SIGNALS(var,body) \
+     { int var;                             \
+       var = SIGSEGV; { body }              \
+       var = SIGBUS; { body }               \
+     }
+# endif
 #else
 # define SIGSEGV_FOR_ALL_SIGNALS(var,body) \
     { int var; var = SIGSEGV; { body } }

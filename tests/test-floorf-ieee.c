@@ -1,5 +1,5 @@
 /* Test of rounding towards negative infinity.
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ dummy (float f)
 int
 main (int argc, _GL_UNUSED char **argv)
 {
-  float (*my_floorf) (float) = argc ? floorf : dummy;
+  float (* volatile my_floorf) (float) = argc ? floorf : dummy;
 
   /* See IEEE 754, section 6.3:
        "the sign of the result of the round floating-point number to

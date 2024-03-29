@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2023 Free Software Foundation, Inc.
+# Copyright (C) 2002-2024 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 #===============================================================================
 # Define global imports
 #===============================================================================
 import os
+import re
 import codecs
 import filecmp
 import subprocess as sp
@@ -38,11 +41,16 @@ __copyright__ = constants.__copyright__
 # Define global constants
 #===============================================================================
 DIRS = constants.DIRS
+substart = constants.substart
 joinpath = constants.joinpath
 copyfile = constants.copyfile
 movefile = constants.movefile
+hardlink = constants.hardlink
+ensure_writable = constants.ensure_writable
+link_if_changed = constants.link_if_changed
 isdir = os.path.isdir
 isfile = os.path.isfile
+islink = os.path.islink
 
 
 #===============================================================================
@@ -51,6 +59,7 @@ isfile = os.path.isfile
 class CopyAction(Enum):
     Copy = 0
     Symlink = 1
+    Hardlink = 2
 
 
 #===============================================================================
@@ -62,7 +71,7 @@ class GLFileSystem(object):
     Its main method lookup(file) is used to find file in these directories or
     combine it using Linux 'patch' utility.'''
 
-    def __init__(self, config):
+    def __init__(self, config: GLConfig) -> None:
         '''Create new GLFileSystem instance. The only argument is localpath,
         which can be an empty list.'''
         if type(config) is not GLConfig:
@@ -70,15 +79,13 @@ class GLFileSystem(object):
                             % type(config).__name__)
         self.config = config
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         '''x.__repr__ <==> repr(x)'''
         result = '<pygnulib.GLFileSystem %s>' % hex(id(self))
         return result
 
-    def lookup(self, name):
-        '''GLFileSystem.lookup(name) -> tuple
-
-        Lookup a file in gnulib and localpath directories or combine it using
+    def lookup(self, name: str) -> tuple[str, bool]:
+        '''Lookup a file in gnulib and localpath directories or combine it using
         'patch' utility. If file was found, method returns string, else it raises
         GLError telling that file was not found. Function also returns flag which
         indicates whether file is a temporary file.
@@ -118,6 +125,7 @@ class GLFileSystem(object):
                 if isfile(tempFile):
                     os.remove(tempFile)
                 copyfile(lookedupFile, tempFile)
+                ensure_writable(tempFile)
                 for diff_in_localdir in reversed(lookedupPatches):
                     command = 'patch -s "%s" < "%s" >&2' % (tempFile, diff_in_localdir)
                     try:  # Try to apply patch
@@ -131,21 +139,23 @@ class GLFileSystem(object):
             raise GLError(1, name)
         return result
 
-    def shouldLink(self, original, lookedup):
+    def shouldLink(self, original: str, lookedup: str) -> bool:
         '''GLFileSystem.shouldLink(original, lookedup)
 
-        Determines whether the original file should be copied or symlinked.
+        Determines whether the original file should be copied, symlinked,
+          or hardlinked.
         Returns a CopyAction.'''
-        symbolic = self.config['symbolic']
-        lsymbolic = self.config['lsymbolic']
+        copymode = self.config['copymode']
+        lcopymode = self.config['lcopymode']
         localpath = self.config['localpath']
-        if symbolic:
-            return CopyAction.Symlink
-        if lsymbolic:
+
+        # Don't bother checking the localpath's if we end up performing the same
+        # action anyways.
+        if copymode != lcopymode:
             for localdir in localpath:
                 if lookedup == joinpath(localdir, original):
-                    return CopyAction.Symlink
-        return CopyAction.Copy
+                    return lcopymode
+        return copymode
 
 
 #===============================================================================
@@ -154,8 +164,13 @@ class GLFileSystem(object):
 class GLFileAssistant(object):
     '''GLFileAssistant is used to help with file processing.'''
 
-    def __init__(self, config, transformers=dict()):
-        '''Create GLFileAssistant instance.'''
+    def __init__(self, config: GLConfig, transformers: dict[str, tuple[re.Pattern, str] | None] = {}) -> None:
+        '''Create GLFileAssistant instance.
+
+        config stores information shared between classes.
+        transformers is a dictionary which uses a file category as the key. The
+          value accessed is a tuple containing arguments for re.sub() or None if
+          no transformations are needed.'''
         if type(config) is not GLConfig:
             raise TypeError('config must be a GLConfig, not %s'
                             % type(config).__name__)
@@ -164,11 +179,11 @@ class GLFileAssistant(object):
                             % type(transformers).__name__)
         for key in ['lib', 'aux', 'main', 'tests']:
             if key not in transformers:
-                transformers[key] = 's,x,x,'
+                transformers[key] = None
             else:  # if key in transformers
                 value = transformers[key]
-                if type(value) is not str:
-                    raise TypeError('transformers[%s] must be a string, not %s'
+                if type(value) is not tuple and value != None:
+                    raise TypeError('transformers[%s] must be a tuple or None, not %s'
                                     % (key, type(value).__name__))
         self.original = None
         self.rewritten = None
@@ -177,15 +192,13 @@ class GLFileAssistant(object):
         self.transformers = transformers
         self.filesystem = GLFileSystem(self.config)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         '''x.__repr__() <==> repr(x)'''
         result = '<pygnulib.GLFileAssistant %s>' % hex(id(self))
         return result
 
-    def tmpfilename(self, path):
-        '''GLFileAssistant.tmpfilename() -> str
-
-        Return the name of a temporary file (file is relative to destdir).'''
+    def tmpfilename(self, path: str) -> str:
+        '''Return the name of a temporary file (file is relative to destdir).'''
         if type(path) is not str:
             raise TypeError('path must be a string, not %s'
                             % (type(path).__name__))
@@ -206,46 +219,36 @@ class GLFileAssistant(object):
                 os.makedirs(dirname)
         return result
 
-    def setOriginal(self, original):
-        '''GLFileAssistant.setOriginal(original)
-
-        Set the name of the original file which will be used.'''
+    def setOriginal(self, original: str) -> None:
+        '''Set the name of the original file which will be used.'''
         if type(original) is not str:
             raise TypeError('original must be a string, not %s'
                             % (type(original).__name__))
         self.original = original
 
-    def setRewritten(self, rewritten):
-        '''GLFileAssistant.setRewritten(rewritten)
-
-        Set the name of the rewritten file which will be used.'''
+    def setRewritten(self, rewritten: str) -> None:
+        '''Set the name of the rewritten file which will be used.'''
         if type(rewritten) is not str:
             raise TypeError('rewritten must be a string, not %s'
                             % type(rewritten).__name__)
         self.rewritten = rewritten
 
-    def addFile(self, file):
-        '''GLFileAssistant.addFile(file)
-
-        Add file to the list of added files.'''
+    def addFile(self, file: str) -> None:
+        '''Add file to the list of added files.'''
         if file not in self.added:
             self.added += [file]
 
-    def removeFile(self, file):
-        '''GLFileAssistant.removeFile(file)
-
-        Remove file from the list of added files.'''
+    def removeFile(self, file: str) -> None:
+        '''Remove file from the list of added files.'''
         if file in self.added:
             self.added.pop(file)
 
-    def getFiles(self):
+    def getFiles(self) -> list[str]:
         '''Return list of the added files.'''
         return list(self.added)
 
-    def add(self, lookedup, tmpflag, tmpfile):
-        '''GLFileAssistant.add(lookedup, tmpflag, tmpfile)
-
-        This method copies a file from gnulib into the destination directory.
+    def add(self, lookedup: str, tmpflag: bool, tmpfile: str) -> None:
+        '''This method copies a file from gnulib into the destination directory.
         The destination is known to exist. If tmpflag is True, then lookedup file
         is a temporary one.'''
         original = self.original
@@ -259,19 +262,21 @@ class GLFileAssistant(object):
             print('Copying file %s' % rewritten)
             if self.filesystem.shouldLink(original, lookedup) == CopyAction.Symlink \
                     and not tmpflag and filecmp.cmp(lookedup, tmpfile):
-                constants.link_if_changed(lookedup, joinpath(destdir, rewritten))
+                link_if_changed(lookedup, joinpath(destdir, rewritten))
             else:  # if any of these conditions is not met
-                try:  # Try to move file
-                    movefile(tmpfile, joinpath(destdir, rewritten))
-                except Exception as error:
-                    raise GLError(17, original)
+                if self.filesystem.shouldLink(original, lookedup) == CopyAction.Hardlink \
+                   and not tmpflag and filecmp.cmp(lookedup, tmpfile):
+                    hardlink(lookedup, joinpath(destdir, rewritten))
+                else:  # Move instead of linking.
+                    try:  # Try to move file
+                        movefile(tmpfile, joinpath(destdir, rewritten))
+                    except Exception as error:
+                        raise GLError(17, original)
         else:  # if self.config['dryrun']
             print('Copy file %s' % rewritten)
 
-    def update(self, lookedup, tmpflag, tmpfile, already_present):
-        '''GLFileAssistant.update(lookedup, tmpflag, tmpfile, already_present)
-
-        This method copies a file from gnulib into the destination directory.
+    def update(self, lookedup: str, tmpflag: bool, tmpfile: str, already_present: bool) -> None:
+        '''This method copies a file from gnulib into the destination directory.
         The destination is known to exist. If tmpflag is True, then lookedup file
         is a temporary one.'''
         original = self.original
@@ -308,24 +313,26 @@ class GLFileAssistant(object):
                     raise GLError(17, original)
                 if self.filesystem.shouldLink(original, lookedup) == CopyAction.Symlink \
                         and not tmpflag and filecmp.cmp(lookedup, tmpfile):
-                    constants.link_if_changed(lookedup, basepath)
+                    link_if_changed(lookedup, basepath)
                 else:  # if any of these conditions is not met
-                    try:  # Try to move file
-                        if os.path.exists(basepath):
-                            os.remove(basepath)
-                        copyfile(tmpfile, rewritten)
-                    except Exception as error:
-                        raise GLError(17, original)
+                    if self.filesystem.shouldLink(original, lookedup) == CopyAction.Hardlink \
+                       and not tmpflag and filecmp.cmp(lookedup, tmpfile):
+                        hardlink(lookedup, basepath)
+                    else:  # Move instead of linking.
+                        try:  # Try to move file
+                            if os.path.exists(basepath):
+                                os.remove(basepath)
+                            copyfile(tmpfile, joinpath(destdir, rewritten))
+                        except Exception as error:
+                            raise GLError(17, original)
             else:  # if self.config['dryrun']
                 if already_present:
                     print('Update file %s (backup in %s)' % (rewritten, backupname))
                 else:  # if not already_present
                     print('Replace file %s (backup in %s)' % (rewritten, backupname))
 
-    def add_or_update(self, already_present):
-        '''GLFileAssistant.add_or_update(already_present)
-
-        This method handles a file that ought to be present afterwards.'''
+    def add_or_update(self, already_present: bool) -> None:
+        '''This method handles a file that ought to be present afterwards.'''
         original = self.original
         rewritten = self.rewritten
         if original == None:
@@ -337,20 +344,21 @@ class GLFileAssistant(object):
                             % type(already_present).__name__)
         xoriginal = original
         if original.startswith('tests=lib/'):
-            xoriginal = constants.substart('tests=lib/', 'lib/', original)
+            xoriginal = substart('tests=lib/', 'lib/', original)
         lookedup, tmpflag = self.filesystem.lookup(xoriginal)
         tmpfile = self.tmpfilename(rewritten)
-        sed_transform_lib_file = self.transformers.get('lib', '')
-        sed_transform_build_aux_file = self.transformers.get('aux', '')
-        sed_transform_main_lib_file = self.transformers.get('main', '')
-        sed_transform_testsrelated_lib_file = self.transformers.get('tests', '')
+        sed_transform_lib_file = self.transformers.get('lib')
+        sed_transform_build_aux_file = self.transformers.get('aux')
+        sed_transform_main_lib_file = self.transformers.get('main')
+        sed_transform_testsrelated_lib_file = self.transformers.get('tests')
         try:  # Try to copy lookedup file to tmpfile
             copyfile(lookedup, tmpfile)
+            ensure_writable(tmpfile)
         except Exception as error:
             raise GLError(15, lookedup)
         # Don't process binary files with sed.
         if not (original.endswith(".class") or original.endswith(".mo")):
-            transformer = ''
+            transformer = None
             if original.startswith('lib/'):
                 if sed_transform_main_lib_file:
                     transformer = sed_transform_main_lib_file
@@ -360,28 +368,28 @@ class GLFileAssistant(object):
             elif original.startswith('tests=lib/'):
                 if sed_transform_testsrelated_lib_file:
                     transformer = sed_transform_testsrelated_lib_file
-            if transformer:
-                args = ['sed', '-e', transformer]
-                stdin = codecs.open(lookedup, 'rb', 'UTF-8')
-                try:  # Try to transform file
-                    data = sp.check_output(args, stdin=stdin, shell=False)
-                    data = data.decode("UTF-8")
-                except Exception as error:
-                    raise GLError(16, lookedup)
-                with codecs.open(tmpfile, 'wb', 'UTF-8') as file:
-                    file.write(data)
+            if transformer != None:
+                # Read the file that we looked up.
+                with open(lookedup, 'r', newline='\n', encoding='utf-8') as file:
+                    src_data = file.read()
+                # Write the transformed data to the temporary file.
+                with open(tmpfile, 'w', newline='\n', encoding='utf-8') as file:
+                    file.write(re.sub(transformer[0], transformer[1], src_data))
         path = joinpath(self.config['destdir'], rewritten)
         if isfile(path):
+            # The file already exists.
             self.update(lookedup, tmpflag, tmpfile, already_present)
-            os.remove(tmpfile)
         else:  # if not isfile(path)
+            # Install the file.
+            # Don't protest if the file should be there but isn't: it happens
+            # frequently that developers don't put autogenerated files under version control.
             self.add(lookedup, tmpflag, tmpfile)
             self.addFile(rewritten)
+        if isfile(tmpfile):
+            os.remove(tmpfile)
 
-    def super_update(self, basename, tmpfile):
-        '''GLFileAssistant.super_update(basename, tmpfile) -> tuple
-
-        Move tmpfile to destdir/basename path, making a backup of it.
+    def super_update(self, basename: str, tmpfile: str) -> tuple[str, str, int]:
+        '''Move tmpfile to destdir/basename path, making a backup of it.
         Returns tuple, which contains basename, backupname and status.
           0: tmpfile is the same as destfile;
           1: tmpfile was used to update destfile;

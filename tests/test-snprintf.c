@@ -1,5 +1,5 @@
 /* Test of snprintf() function.
-   Copyright (C) 2007-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ SIGNATURE_CHECK (snprintf, int, (char *, size_t, char const *, ...));
 #include "macros.h"
 
 int
-main (int argc, char *argv[])
+main ()
 {
   char buf[8];
   int size;

@@ -1,5 +1,5 @@
-# expm1.m4 serial 10
-dnl Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# expm1.m4 serial 12
+dnl Copyright (C) 2010-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -33,7 +33,7 @@ AC_DEFUN([gl_FUNC_EXPM1],
     AC_CACHE_CHECK([whether expm1() can be used with libm],
       [gl_cv_func_expm1_in_libm],
       [
-        save_LIBS="$LIBS"
+        saved_LIBS="$LIBS"
         LIBS="$LIBS -lm"
         AC_LINK_IFELSE(
           [AC_LANG_PROGRAM(
@@ -47,7 +47,7 @@ AC_DEFUN([gl_FUNC_EXPM1],
                       || expm1 (x) > 0.5;]])],
           [gl_cv_func_expm1_in_libm=yes],
           [gl_cv_func_expm1_in_libm=no])
-        LIBS="$save_LIBS"
+        LIBS="$saved_LIBS"
       ])
     if test $gl_cv_func_expm1_in_libm = yes; then
       EXPM1_LIBM=-lm
@@ -62,7 +62,7 @@ AC_DEFUN([gl_FUNC_EXPM1],
         AC_CACHE_CHECK([whether expm1 works according to ISO C 99 with IEC 60559],
           [gl_cv_func_expm1_ieee],
           [
-            save_LIBS="$LIBS"
+            saved_LIBS="$LIBS"
             LIBS="$LIBS $EXPM1_LIBM"
             AC_RUN_IFELSE(
               [AC_LANG_SOURCE([[
@@ -90,12 +90,12 @@ int main (int argc, char *argv[])
                                      # Guess yes on musl systems.
                  *-musl* | midipix*) gl_cv_func_expm1_ieee="guessing yes" ;;
                                      # Guess yes on native Windows.
-                 mingw*)             gl_cv_func_expm1_ieee="guessing yes" ;;
+                 mingw* | windows*)  gl_cv_func_expm1_ieee="guessing yes" ;;
                                      # If we don't know, obey --enable-cross-guesses.
                  *)                  gl_cv_func_expm1_ieee="$gl_cross_guess_normal" ;;
                esac
               ])
-            LIBS="$save_LIBS"
+            LIBS="$saved_LIBS"
           ])
         case "$gl_cv_func_expm1_ieee" in
           *yes) ;;

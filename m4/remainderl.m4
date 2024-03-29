@@ -1,5 +1,5 @@
-# remainderl.m4 serial 14
-dnl Copyright (C) 2012-2023 Free Software Foundation, Inc.
+# remainderl.m4 serial 16
+dnl Copyright (C) 2012-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -16,7 +16,7 @@ AC_DEFUN([gl_FUNC_REMAINDERL],
 
   dnl Test whether remainderl() exists. Assume that remainderl(), if it exists, is
   dnl defined in the same library as remainder().
-  save_LIBS="$LIBS"
+  saved_LIBS="$LIBS"
   LIBS="$LIBS $REMAINDER_LIBM"
   AC_CACHE_CHECK([for remainderl],
     [gl_cv_func_remainderl],
@@ -40,7 +40,7 @@ AC_DEFUN([gl_FUNC_REMAINDERL],
         [gl_cv_func_remainderl=yes],
         [gl_cv_func_remainderl=no])
     ])
-  LIBS="$save_LIBS"
+  LIBS="$saved_LIBS"
   if test $gl_cv_func_remainderl = yes; then
     HAVE_REMAINDERL=1
     REMAINDERL_LIBM="$REMAINDER_LIBM"
@@ -48,10 +48,10 @@ AC_DEFUN([gl_FUNC_REMAINDERL],
     dnl IRIX 6.5 has remainderl() in libm but doesn't declare it in <math.h>.
     AC_CHECK_DECLS([remainderl], , [HAVE_DECL_REMAINDERL=0], [[#include <math.h>]])
 
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $REMAINDERL_LIBM"
     gl_FUNC_REMAINDERL_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_remainderl_works" in
       *yes) ;;
       *) REPLACE_REMAINDERL=1 ;;
@@ -63,7 +63,7 @@ AC_DEFUN([gl_FUNC_REMAINDERL],
         AC_CACHE_CHECK([whether remainderl works according to ISO C 99 with IEC 60559],
           [gl_cv_func_remainderl_ieee],
           [
-            save_LIBS="$LIBS"
+            saved_LIBS="$LIBS"
             LIBS="$LIBS $REMAINDERL_LIBM"
             AC_RUN_IFELSE(
               [AC_LANG_SOURCE([[
@@ -105,12 +105,12 @@ int main (int argc, char *argv[])
                                      # Guess yes on musl systems.
                  *-musl* | midipix*) gl_cv_func_remainderl_ieee="guessing yes" ;;
                                      # Guess yes on native Windows.
-                 mingw*)             gl_cv_func_remainderl_ieee="guessing yes" ;;
+                 mingw* | windows*)  gl_cv_func_remainderl_ieee="guessing yes" ;;
                                      # If we don't know, obey --enable-cross-guesses.
                  *)                  gl_cv_func_remainderl_ieee="$gl_cross_guess_normal" ;;
                esac
               ])
-            LIBS="$save_LIBS"
+            LIBS="$saved_LIBS"
           ])
         case "$gl_cv_func_remainderl_ieee" in
           *yes) ;;
@@ -246,7 +246,7 @@ int main (int argc, char *argv[])
                                # Guess no on OpenBSD.
            openbsd*)           gl_cv_func_remainderl_works="guessing no" ;;
                                # Guess yes on native Windows.
-           mingw*)             gl_cv_func_remainderl_works="guessing yes" ;;
+           mingw* | windows*)  gl_cv_func_remainderl_works="guessing yes" ;;
                                # If we don't know, obey --enable-cross-guesses.
            *)                  gl_cv_func_remainderl_works="$gl_cross_guess_normal" ;;
          esac

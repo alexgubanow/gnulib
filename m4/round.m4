@@ -1,5 +1,5 @@
-# round.m4 serial 24
-dnl Copyright (C) 2007, 2009-2023 Free Software Foundation, Inc.
+# round.m4 serial 27
+dnl Copyright (C) 2007, 2009-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -31,7 +31,7 @@ AC_DEFUN([gl_FUNC_ROUND],
     AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
     AC_CACHE_CHECK([whether round works], [gl_cv_func_round_works],
       [
-        save_LIBS="$LIBS"
+        saved_LIBS="$LIBS"
         LIBS="$LIBS $ROUND_LIBM"
         AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <float.h>
@@ -60,20 +60,21 @@ int main()
   return (x < 0.5 && round (x) != 0.0);
 }]])], [gl_cv_func_round_works=yes], [gl_cv_func_round_works=no],
         [case "$host_os" in
-           netbsd* | aix*) gl_cv_func_round_works="guessing no" ;;
-                           # Guess yes on MSVC, no on mingw.
-           mingw*)         AC_EGREP_CPP([Known], [
+           netbsd* | aix*)    gl_cv_func_round_works="guessing no" ;;
+                              # Guess yes on MSVC, no on mingw.
+           windows*-msvc*)    gl_cv_func_round_works="guessing yes" ;;
+           mingw* | windows*) AC_EGREP_CPP([Known], [
 #ifdef _MSC_VER
  Known
 #endif
-                             ],
-                             [gl_cv_func_round_works="guessing yes"],
-                             [gl_cv_func_round_works="guessing no"])
-                           ;;
-           *)              gl_cv_func_round_works="guessing yes" ;;
+                                ],
+                                [gl_cv_func_round_works="guessing yes"],
+                                [gl_cv_func_round_works="guessing no"])
+                              ;;
+           *)                 gl_cv_func_round_works="guessing yes" ;;
          esac
         ])
-        LIBS="$save_LIBS"
+        LIBS="$saved_LIBS"
       ])
     case "$gl_cv_func_round_works" in
       *no) REPLACE_ROUND=1 ;;
@@ -85,7 +86,7 @@ int main()
         AC_CACHE_CHECK([whether round works according to ISO C 99 with IEC 60559],
           [gl_cv_func_round_ieee],
           [
-            save_LIBS="$LIBS"
+            saved_LIBS="$LIBS"
             LIBS="$LIBS $ROUND_LIBM"
             AC_RUN_IFELSE(
               [AC_LANG_SOURCE([[
@@ -118,7 +119,8 @@ int main (int argc, char *argv[])
                                      # Guess yes on musl systems.
                  *-musl* | midipix*) gl_cv_func_round_ieee="guessing yes" ;;
                                      # Guess yes on MSVC, no on mingw.
-                 mingw*)             AC_EGREP_CPP([Known], [
+                 windows*-msvc*)     gl_cv_func_round_ieee="guessing yes" ;;
+                 mingw* | windows*)  AC_EGREP_CPP([Known], [
 #ifdef _MSC_VER
  Known
 #endif
@@ -130,7 +132,7 @@ int main (int argc, char *argv[])
                  *)                  gl_cv_func_round_ieee="$gl_cross_guess_normal" ;;
                esac
               ])
-            LIBS="$save_LIBS"
+            LIBS="$saved_LIBS"
           ])
         case "$gl_cv_func_round_ieee" in
           *yes) ;;

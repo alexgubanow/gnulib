@@ -1,5 +1,5 @@
 /* Test of POSIX compatible vasnwprintf() and asnwprintf() functions.
-   Copyright (C) 2007-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@
 #include "minus-zero.h"
 #include "infinity.h"
 #include "nan.h"
+#include "snan.h"
 
 /* The SGI MIPS floating-point format does not distinguish 0.0 and -0.0.  */
 static int
@@ -247,6 +248,19 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     ASSERT (length == wcslen (result));
     free (result);
   }
+#if HAVE_SNAND
+  { /* Signalling NaN.  */
+    size_t length;
+    wchar_t *result =
+      my_asnwprintf (NULL, &length, L"%a %d", SNaNd (), 33, 44, 55);
+    ASSERT (result != NULL);
+    ASSERT (wcslen (result) >= 3 + 3
+            && wcsisnan (result, 0, wcslen (result) - 3, 0)
+            && wcscmp (result + wcslen (result) - 3, L" 33") == 0);
+    ASSERT (length == wcslen (result));
+    free (result);
+  }
+#endif
 
   { /* Rounding near the decimal point.  */
     size_t length;
@@ -590,10 +604,23 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     ASSERT (length == wcslen (result));
     free (result);
   }
+#if HAVE_SNANL
+  { /* Signalling NaN.  */
+    size_t length;
+    wchar_t *result =
+      my_asnwprintf (NULL, &length, L"%La %d", SNaNl (), 33, 44, 55);
+    ASSERT (result != NULL);
+    ASSERT (wcslen (result) >= 3 + 3
+            && wcsisnan (result, 0, wcslen (result) - 3, 0)
+            && wcscmp (result + wcslen (result) - 3, L" 33") == 0);
+    ASSERT (length == wcslen (result));
+    free (result);
+  }
+#endif
 #if CHECK_PRINTF_SAFE && ((defined __ia64 && LDBL_MANT_DIG == 64) || (defined __x86_64__ || defined __amd64__) || (defined __i386 || defined __i386__ || defined _I386 || defined _M_IX86 || defined _X86_)) && !HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
   { /* Quiet NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%La %d", x.value, 33, 44, 55);
@@ -607,7 +634,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   {
     /* Signalling NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%La %d", x.value, 33, 44, 55);
@@ -621,7 +648,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   /* asnwprintf should print something for noncanonical values.  */
   { /* Pseudo-NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%La %d", x.value, 33, 44, 55);
@@ -632,7 +659,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Infinity.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%La %d", x.value, 33, 44, 55);
@@ -643,7 +670,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Zero.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%La %d", x.value, 33, 44, 55);
@@ -654,7 +681,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Unnormalized number.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%La %d", x.value, 33, 44, 55);
@@ -665,7 +692,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Denormal.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%La %d", x.value, 33, 44, 55);
@@ -1115,6 +1142,19 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     ASSERT (length == wcslen (result));
     free (result);
   }
+#if HAVE_SNAND
+  { /* Signalling NaN.  */
+    size_t length;
+    wchar_t *result =
+      my_asnwprintf (NULL, &length, L"%f %d", SNaNd (), 33, 44, 55);
+    ASSERT (result != NULL);
+    ASSERT (wcslen (result) >= 3 + 3
+            && wcsisnan (result, 0, wcslen (result) - 3, 0)
+            && wcscmp (result + wcslen (result) - 3, L" 33") == 0);
+    ASSERT (length == wcslen (result));
+    free (result);
+  }
+#endif
 
   { /* Width.  */
     size_t length;
@@ -1434,10 +1474,23 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     ASSERT (length == wcslen (result));
     free (result);
   }
+#if HAVE_SNANL
+  { /* Signalling NaN.  */
+    size_t length;
+    wchar_t *result =
+      my_asnwprintf (NULL, &length, L"%Lf %d", SNaNl (), 33, 44, 55);
+    ASSERT (result != NULL);
+    ASSERT (wcslen (result) >= 3 + 3
+            && wcsisnan (result, 0, wcslen (result) - 3, 0)
+            && wcscmp (result + wcslen (result) - 3, L" 33") == 0);
+    ASSERT (length == wcslen (result));
+    free (result);
+  }
+#endif
 #if CHECK_PRINTF_SAFE && ((defined __ia64 && LDBL_MANT_DIG == 64) || (defined __x86_64__ || defined __amd64__) || (defined __i386 || defined __i386__ || defined _I386 || defined _M_IX86 || defined _X86_)) && !HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
   { /* Quiet NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lf %d", x.value, 33, 44, 55);
@@ -1451,7 +1504,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   {
     /* Signalling NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lf %d", x.value, 33, 44, 55);
@@ -1465,7 +1518,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   /* asnwprintf should print something for noncanonical values.  */
   { /* Pseudo-NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lf %d", x.value, 33, 44, 55);
@@ -1476,7 +1529,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Infinity.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lf %d", x.value, 33, 44, 55);
@@ -1487,7 +1540,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Zero.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lf %d", x.value, 33, 44, 55);
@@ -1498,7 +1551,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Unnormalized number.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lf %d", x.value, 33, 44, 55);
@@ -1509,7 +1562,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Denormal.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lf %d", x.value, 33, 44, 55);
@@ -1749,6 +1802,19 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     ASSERT (length == wcslen (result));
     free (result);
   }
+#if HAVE_SNAND
+  { /* Signalling NaN.  */
+    size_t length;
+    wchar_t *result =
+      my_asnwprintf (NULL, &length, L"%F %d", SNaNd (), 33, 44, 55);
+    ASSERT (result != NULL);
+    ASSERT (wcslen (result) >= 3 + 3
+            && wcsisnan (result, 0, wcslen (result) - 3, 1)
+            && wcscmp (result + wcslen (result) - 3, L" 33") == 0);
+    ASSERT (length == wcslen (result));
+    free (result);
+  }
+#endif
 
   { /* FLAG_ZERO.  */
     size_t length;
@@ -1885,6 +1951,19 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     ASSERT (length == wcslen (result));
     free (result);
   }
+#if HAVE_SNANL
+  { /* Signalling NaN.  */
+    size_t length;
+    wchar_t *result =
+      my_asnwprintf (NULL, &length, L"%LF %d", SNaNl (), 33, 44, 55);
+    ASSERT (result != NULL);
+    ASSERT (wcslen (result) >= 3 + 3
+            && wcsisnan (result, 0, wcslen (result) - 3, 1)
+            && wcscmp (result + wcslen (result) - 3, L" 33") == 0);
+    ASSERT (length == wcslen (result));
+    free (result);
+  }
+#endif
 
   { /* FLAG_ZERO.  */
     size_t length;
@@ -2127,6 +2206,19 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     ASSERT (length == wcslen (result));
     free (result);
   }
+#if HAVE_SNAND
+  { /* Signalling NaN.  */
+    size_t length;
+    wchar_t *result =
+      my_asnwprintf (NULL, &length, L"%e %d", SNaNd (), 33, 44, 55);
+    ASSERT (result != NULL);
+    ASSERT (wcslen (result) >= 3 + 3
+            && wcsisnan (result, 0, wcslen (result) - 3, 0)
+            && wcscmp (result + wcslen (result) - 3, L" 33") == 0);
+    ASSERT (length == wcslen (result));
+    free (result);
+  }
+#endif
 
   { /* Width.  */
     size_t length;
@@ -2482,10 +2574,23 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     ASSERT (length == wcslen (result));
     free (result);
   }
+#if HAVE_SNANL
+  { /* Signalling NaN.  */
+    size_t length;
+    wchar_t *result =
+      my_asnwprintf (NULL, &length, L"%Le %d", SNaNl (), 33, 44, 55);
+    ASSERT (result != NULL);
+    ASSERT (wcslen (result) >= 3 + 3
+            && wcsisnan (result, 0, wcslen (result) - 3, 0)
+            && wcscmp (result + wcslen (result) - 3, L" 33") == 0);
+    ASSERT (length == wcslen (result));
+    free (result);
+  }
+#endif
 #if CHECK_PRINTF_SAFE && ((defined __ia64 && LDBL_MANT_DIG == 64) || (defined __x86_64__ || defined __amd64__) || (defined __i386 || defined __i386__ || defined _I386 || defined _M_IX86 || defined _X86_)) && !HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
   { /* Quiet NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Le %d", x.value, 33, 44, 55);
@@ -2497,7 +2602,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   {
     /* Signalling NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Le %d", x.value, 33, 44, 55);
@@ -2509,7 +2614,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   /* asnwprintf should print something even for noncanonical values.  */
   { /* Pseudo-NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Le %d", x.value, 33, 44, 55);
@@ -2520,7 +2625,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Infinity.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Le %d", x.value, 33, 44, 55);
@@ -2531,7 +2636,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Zero.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Le %d", x.value, 33, 44, 55);
@@ -2542,7 +2647,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Unnormalized number.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Le %d", x.value, 33, 44, 55);
@@ -2553,7 +2658,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Denormal.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Le %d", x.value, 33, 44, 55);
@@ -2917,6 +3022,19 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     ASSERT (length == wcslen (result));
     free (result);
   }
+#if HAVE_SNAND
+  { /* Signalling NaN.  */
+    size_t length;
+    wchar_t *result =
+      my_asnwprintf (NULL, &length, L"%g %d", SNaNd (), 33, 44, 55);
+    ASSERT (result != NULL);
+    ASSERT (wcslen (result) >= 3 + 3
+            && wcsisnan (result, 0, wcslen (result) - 3, 0)
+            && wcscmp (result + wcslen (result) - 3, L" 33") == 0);
+    ASSERT (length == wcslen (result));
+    free (result);
+  }
+#endif
 
   { /* Width.  */
     size_t length;
@@ -3258,10 +3376,23 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     ASSERT (length == wcslen (result));
     free (result);
   }
+#if HAVE_SNANL
+  { /* Signalling NaN.  */
+    size_t length;
+    wchar_t *result =
+      my_asnwprintf (NULL, &length, L"%Lg %d", SNaNl (), 33, 44, 55);
+    ASSERT (result != NULL);
+    ASSERT (wcslen (result) >= 3 + 3
+            && wcsisnan (result, 0, wcslen (result) - 3, 0)
+            && wcscmp (result + wcslen (result) - 3, L" 33") == 0);
+    ASSERT (length == wcslen (result));
+    free (result);
+  }
+#endif
 #if CHECK_PRINTF_SAFE && ((defined __ia64 && LDBL_MANT_DIG == 64) || (defined __x86_64__ || defined __amd64__) || (defined __i386 || defined __i386__ || defined _I386 || defined _M_IX86 || defined _X86_)) && !HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
   { /* Quiet NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0xC3333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lg %d", x.value, 33, 44, 55);
@@ -3275,7 +3406,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   {
     /* Signalling NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x83333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lg %d", x.value, 33, 44, 55);
@@ -3289,7 +3420,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   /* asnwprintf should print something for noncanonical values.  */
   { /* Pseudo-NaN.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lg %d", x.value, 33, 44, 55);
@@ -3300,7 +3431,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Infinity.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lg %d", x.value, 33, 44, 55);
@@ -3311,7 +3442,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Zero.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lg %d", x.value, 33, 44, 55);
@@ -3322,7 +3453,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Unnormalized number.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lg %d", x.value, 33, 44, 55);
@@ -3333,7 +3464,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
   }
   { /* Pseudo-Denormal.  */
     static union { unsigned int word[4]; long double value; } x =
-      { LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
+      { .word = LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
     size_t length;
     wchar_t *result =
       my_asnwprintf (NULL, &length, L"%Lg %d", x.value, 33, 44, 55);
@@ -3499,6 +3630,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     free (result);
   }
 
+#if NEED_PRINTF_WITH_N_DIRECTIVE
   /* Test the support of the %n format directive.  */
 
   {
@@ -3512,6 +3644,7 @@ test_function (wchar_t * (*my_asnwprintf) (wchar_t *, size_t *, const wchar_t *,
     ASSERT (count == 4);
     free (result);
   }
+#endif
 
   /* Test the support of the POSIX/XSI format strings with positions.  */
 

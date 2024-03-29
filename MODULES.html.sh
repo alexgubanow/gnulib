@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2002-2023 Free Software Foundation, Inc.
+# Copyright (C) 2002-2024 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -3419,11 +3419,14 @@ func_all_modules ()
   func_module unictype/property-grapheme-link
   func_module unictype/property-hex-digit
   func_module unictype/property-hyphen
+  func_module unictype/property-id-compat-math-continue
+  func_module unictype/property-id-compat-math-start
   func_module unictype/property-id-continue
   func_module unictype/property-id-start
   func_module unictype/property-ideographic
   func_module unictype/property-ids-binary-operator
   func_module unictype/property-ids-trinary-operator
+  func_module unictype/property-ids-unary-operator
   func_module unictype/property-ignorable-control
   func_module unictype/property-iso-control
   func_module unictype/property-join-control
@@ -3447,6 +3450,7 @@ func_all_modules ()
   func_module unictype/property-paragraph-separator
   func_module unictype/property-pattern-syntax
   func_module unictype/property-pattern-white-space
+  func_module unictype/property-prepended-concatenation-mark
   func_module unictype/property-private-use
   func_module unictype/property-punctuation
   func_module unictype/property-quotation-mark

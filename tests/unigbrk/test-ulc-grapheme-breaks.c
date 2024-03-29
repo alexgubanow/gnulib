@@ -1,5 +1,5 @@
 /* Grapheme cluster breaks test.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ main ()
 
           fprintf (stderr, "   input:");
           for (j = 0; j < LENGTH; j++)
-            fprintf (stderr, " %02x", (unsigned char) s[j]);
+            fprintf (stderr, " %02X", (unsigned char) s[j]);
           putc ('\n', stderr);
 
           fprintf (stderr, "expected:");
@@ -77,6 +77,7 @@ main ()
             fprintf (stderr, "  %d", p[j]);
           putc ('\n', stderr);
 
+          fflush (stderr);
           abort ();
         }
   }

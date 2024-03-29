@@ -1,5 +1,5 @@
 /* Test of fnmatch string matching function.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -853,6 +853,10 @@ main (int argc, char *argv[])
 
       case '5':
         /* Locale encoding is GB18030.  */
+        #if (defined __GLIBC__ && __GLIBC__ == 2 && __GLIBC_MINOR__ >= 13 && __GLIBC_MINOR__ <= 15)
+        fputs ("Skipping test: The GB18030 converter in this system's iconv is broken.\n", stderr);
+        return 77;
+        #endif
 
         ASSERT (fnmatch ("x?y", "x\250\271y", 0) == 0); /* "xüy" */
         ASSERT (fnmatch ("x?y", "x\201\060\211\070y", 0) == 0); /* "xßy" */

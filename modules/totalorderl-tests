@@ -1,0 +1,18 @@
+Files:
+tests/test-totalorderl.c
+tests/test-totalorder.h
+tests/minus-zero.h
+tests/infinity.h
+tests/signature.h
+tests/macros.h
+
+Depends-on:
+signed-nan
+signed-snan
+
+configure.ac:
+
+Makefile.am:
+TESTS += test-totalorderl
+check_PROGRAMS += test-totalorderl
+test_totalorderl_LDADD = $(LDADD) @TOTALORDERL_LIBM@

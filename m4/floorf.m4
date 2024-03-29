@@ -1,5 +1,5 @@
-# floorf.m4 serial 19
-dnl Copyright (C) 2007, 2009-2023 Free Software Foundation, Inc.
+# floorf.m4 serial 21
+dnl Copyright (C) 2007, 2009-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -26,7 +26,7 @@ AC_DEFUN([gl_FUNC_FLOORF],
         AC_CACHE_CHECK([whether floorf works according to ISO C 99 with IEC 60559],
           [gl_cv_func_floorf_ieee],
           [
-            save_LIBS="$LIBS"
+            saved_LIBS="$LIBS"
             LIBS="$LIBS $FLOORF_LIBM"
             AC_RUN_IFELSE(
               [AC_LANG_SOURCE([[
@@ -54,12 +54,12 @@ int main (int argc, char *argv[])
                                      # Guess yes on musl systems.
                  *-musl* | midipix*) gl_cv_func_floorf_ieee="guessing yes" ;;
                                      # Guess yes on native Windows.
-                 mingw*)             gl_cv_func_floorf_ieee="guessing yes" ;;
+                 mingw* | windows*)  gl_cv_func_floorf_ieee="guessing yes" ;;
                                      # If we don't know, obey --enable-cross-guesses.
                  *)                  gl_cv_func_floorf_ieee="$gl_cross_guess_normal" ;;
                esac
               ])
-            LIBS="$save_LIBS"
+            LIBS="$saved_LIBS"
           ])
         case "$gl_cv_func_floorf_ieee" in
           *yes) ;;
@@ -94,7 +94,7 @@ AC_DEFUN([gl_FUNC_FLOORF_LIBS],
          [[x = funcptr(x) + floorf(x);]])],
       [gl_cv_func_floorf_libm=])
     if test "$gl_cv_func_floorf_libm" = "?"; then
-      save_LIBS="$LIBS"
+      saved_LIBS="$LIBS"
       LIBS="$LIBS -lm"
       AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
@@ -106,7 +106,7 @@ AC_DEFUN([gl_FUNC_FLOORF_LIBS],
              float x;]],
            [[x = funcptr(x) + floorf(x);]])],
         [gl_cv_func_floorf_libm="-lm"])
-      LIBS="$save_LIBS"
+      LIBS="$saved_LIBS"
     fi
   ])
   FLOORF_LIBM="$gl_cv_func_floorf_libm"

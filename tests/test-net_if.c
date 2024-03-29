@@ -1,5 +1,5 @@
 /* Test of <net/if.h> functions.
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ SIGNATURE_CHECK (if_nametoindex, unsigned int, (const char *));
 
 #include <stddef.h> /* NULL */
 #include <stdio.h> /* fprintf */
+#include <string.h> /* strcmp */
 
 int
 main (int argc, char *argv[])

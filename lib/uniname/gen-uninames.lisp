@@ -2,7 +2,7 @@
 
 ;;; Creation of gnulib's uninames.h from the UnicodeData.txt table.
 
-;;; Copyright (C) 2000-2023 Free Software Foundation, Inc.
+;;; Copyright (C) 2000-2024 Free Software Foundation, Inc.
 ;;; Written by Bruno Haible <bruno@clisp.org>, 2000-12-28.
 ;;;
 ;;; This program is free software.
@@ -176,7 +176,7 @@
         (format ostream " * Unicode character name table.~%")
         (format ostream " * Generated automatically by the gen-uninames utility.~%")
         (format ostream " */~%")
-        (format ostream "/* Copyright (C) 2000-2022 Free Software Foundation, Inc.~%")
+        (format ostream "/* Copyright (C) 2000-2024 Free Software Foundation, Inc.~%")
         (format ostream "~%")
         (format ostream "   This file is free software.~%")
         (format ostream "   It is dual-licensed under \"the GNU LGPLv3+ or the GNU GPLv2+\".~%")

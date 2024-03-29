@@ -1,6 +1,6 @@
 @c Gnulib README
 
-@c Copyright 2001, 2003--2023 Free Software Foundation, Inc.
+@c Copyright 2001, 2003--2024 Free Software Foundation, Inc.
 
 @c Permission is granted to copy, distribute and/or modify this document
 @c under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -288,7 +288,7 @@ platform is not the latest version.  @xref{Target Platforms}.
 Many Gnulib modules exist so that applications need not worry about
 undesirable variability in implementations.  For example, an
 application that uses the @code{malloc} module need not worry about
-@code{malloc@ (0)} returning @code{NULL} on some Standard C
+@code{malloc@ (0)} returning a null pointer on some Standard C
 platforms; and @code{glob} users need not worry about @code{glob}
 silently omitting symbolic links to nonexistent files on some
 platforms that do not conform to POSIX.
@@ -336,8 +336,8 @@ forever.
 
 Even if the include files exist, they may not conform to the C standard.
 However, GCC has a @command{fixincludes} script that attempts to fix most
-C89-conformance problems.  Gnulib currently assumes include files
-largely conform to C89 or better.  People still using ancient hosts
+conformance problems.  Gnulib currently assumes include files
+largely conform to C99 or better.  People still using ancient hosts
 should use fixincludes or fix their include files manually.
 
 Even if the include files conform, the library itself may not.
@@ -377,7 +377,11 @@ it directly, preferring plain @code{bool} via the
 Compound literals and designated initializers.
 
 @item
-Variadic macros.
+Variadic macros.@*
+@findex __VA_ARGS__
+Note: The handling of @code{__VA_ARGS__} in MSVC differs from the one
+in ISO C 99, see @url{https://stackoverflow.com/questions/5134523/}.
+But usually this matters only for macros that decompose @code{__VA_ARGS__}.
 
 @item
 @code{static inline} functions.
@@ -421,6 +425,14 @@ variably modified types, such as array declarations in function
 prototype scope.
 
 @item
+Converting to pointers via integer types other than @code{intptr_t} or
+@code{uintptr_t}.  Although the C standard says that values of these
+integer types, if they exist, should be convertible to and from
+@code{intmax_t} and @code{uintmax_t} without loss of information, on
+CHERI platforms such conversions result in integers that, if converted
+back to a pointer, cannot be dereferenced.
+
+@item
 @code{extern inline} functions, without checking whether they are
 supported.  @xref{extern inline}.
 
@@ -441,10 +453,14 @@ Comments beginning with @samp{//}.  This is mostly for style reasons.
 @node Other portability assumptions
 @subsection Other portability assumptions made by Gnulib
 
-The GNU coding standards allow one departure from strict C: Gnulib
-code can assume that standard internal types like
-@code{ptrdiff_t} and @code{size_t} are no
-wider than @code{long}.  POSIX requires implementations to support at
+Gnulib code makes the following assumptions
+that go beyond what C and POSIX require:
+
+@itemize
+@item
+Standard internal types like @code{ptrdiff_t} and @code{size_t} are no
+wider than @code{long}.  The GNU coding standards allow code to make
+this assumption, POSIX requires implementations to support at
 least one programming environment where this is true, and such
 environments are recommended for Gnulib-using applications.  When it
 is easy to port to non-POSIX platforms like MinGW where these types
@@ -453,9 +469,6 @@ using @code{ptrdiff_t} instead of @code{long}.  However, it is not
 always that easy, and no effort has been made to check that all Gnulib
 modules work on MinGW-like environments.
 
-Gnulib code makes the following additional assumptions:
-
-@itemize
 @item
 @code{int} and @code{unsigned int} are at least 32 bits wide.  POSIX
 and the GNU coding standards both require this.
@@ -469,21 +482,24 @@ sometimes do not guarantee this, and Gnulib code with this
 assumption is now considered to be questionable.
 @xref{Integer Properties}.
 
-Although some Gnulib modules contain explicit support for the other signed
-integer representations allowed by the C standard (ones' complement and signed
-magnitude), these modules are the exception rather than the rule.
-All practical Gnulib targets use two's complement.
+Although some Gnulib modules contain explicit support for
+ones' complement and signed magnitude integer representations,
+which are allowed by C17 and earlier,
+these modules are the exception rather than the rule.
+All practical Gnulib targets use two's complement, which is required by C23.
 
 @item
 There are no ``holes'' in integer values: all the bits of an integer
 contribute to its value in the usual way.
 In particular, an unsigned type and its signed counterpart have the
 same number of bits when you count the latter's sign bit.
+(As an exception, Gnulib code is portable to CHERI platforms
+even though this assumption is false for CHERI.)
 
 @item
-Objects with all bits zero are treated as 0 or NULL@.  For example,
-@code{memset@ (A, 0, sizeof@ A)} initializes an array @code{A} of
-pointers to NULL.
+Objects with all bits zero are treated as zero or as null pointers.
+For example, @code{memset@ (A, 0, sizeof@ A)} initializes an array
+@code{A} of pointers to null pointers.
 
 @item
 The types @code{intptr_t} and @code{uintptr_t} exist, and pointers
@@ -580,12 +596,15 @@ updates to @code{texinfo.tex},
 documentation updates.
 @end itemize
 
-So far, we have four stable branches:
+So far, we have five stable branches:
 @table @code
+@item stable-202401
+A stable branch that starts at the beginning of January 2024.
 @item stable-202307
 A stable branch that starts at the beginning of July 2023.
 @item stable-202301
 A stable branch that starts at the beginning of January 2023.
+It is no longer updated.
 @item stable-202207
 A stable branch that starts at the beginning of July 2022.
 It is no longer updated.

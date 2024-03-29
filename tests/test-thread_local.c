@@ -1,5 +1,5 @@
 /* Test of thread-local storage in multithreaded situations.
-   Copyright (C) 2005, 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005, 2008-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ perhaps_yield (void)
 {
   /* Call yield () only with a certain probability, otherwise the
      sequence of thread activations may be too predictable.  */
-  if ((((unsigned int) rand () >> 3) % 4) == 0)
+  if ((((unsigned long) random () >> 3) % 4) == 0)
     yield ();
 }
 
@@ -84,10 +84,10 @@ perhaps_yield (void)
 /* ----------------------- Test thread-local storage ----------------------- */
 
 #define KEYS_COUNT 4
-static unsigned int thread_local value0;
-static unsigned int thread_local value1;
-static unsigned int thread_local value2;
-static unsigned int thread_local value3;
+static thread_local unsigned int value0;
+static thread_local unsigned int value1;
+static thread_local unsigned int value2;
+static thread_local unsigned int value3;
 
 static int
 worker_thread (void *arg)
@@ -102,7 +102,7 @@ worker_thread (void *arg)
   dbgprintf ("Worker %p before first assignment\n", thrd_current_pointer ());
   for (i = 0; i < KEYS_COUNT; i++)
     {
-      *values[i] = (((unsigned int) rand () >> 3) % 1000000) * THREAD_COUNT + id;
+      *values[i] = (((unsigned long) random () >> 3) % 1000000) * THREAD_COUNT + id;
       /* Hopefully no arithmetic overflow.  */
       if ((*values[i] % THREAD_COUNT) != id)
         abort ();
@@ -114,8 +114,8 @@ worker_thread (void *arg)
   for (repeat = REPEAT_COUNT; repeat > 0; repeat--)
     {
       dbgprintf ("Worker %p doing value swapping\n", thrd_current_pointer ());
-      i = ((unsigned int) rand () >> 3) % KEYS_COUNT;
-      j = ((unsigned int) rand () >> 3) % KEYS_COUNT;
+      i = ((unsigned long) random () >> 3) % KEYS_COUNT;
+      j = ((unsigned long) random () >> 3) % KEYS_COUNT;
       if (i != j)
         {
           unsigned int vi = *values[i];

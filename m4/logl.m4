@@ -1,5 +1,5 @@
-# logl.m4 serial 16
-dnl Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# logl.m4 serial 18
+dnl Copyright (C) 2010-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -33,7 +33,7 @@ AC_DEFUN([gl_FUNC_LOGL],
     AC_CACHE_CHECK([whether logl() can be used with libm],
       [gl_cv_func_logl_in_libm],
       [
-        save_LIBS="$LIBS"
+        saved_LIBS="$LIBS"
         LIBS="$LIBS -lm"
         AC_LINK_IFELSE(
           [AC_LANG_PROGRAM(
@@ -47,7 +47,7 @@ AC_DEFUN([gl_FUNC_LOGL],
                       || logl (x) > 1;]])],
           [gl_cv_func_logl_in_libm=yes],
           [gl_cv_func_logl_in_libm=no])
-        LIBS="$save_LIBS"
+        LIBS="$saved_LIBS"
       ])
     if test $gl_cv_func_logl_in_libm = yes; then
       LOGL_LIBM=-lm
@@ -58,10 +58,10 @@ AC_DEFUN([gl_FUNC_LOGL],
     dnl Also check whether it's declared.
     dnl Mac OS X 10.3 has logl() in libc but doesn't declare it in <math.h>.
     AC_CHECK_DECL([logl], , [HAVE_DECL_LOGL=0], [[#include <math.h>]])
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $LOGL_LIBM"
     gl_FUNC_LOGL_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_logl_works" in
       *yes) ;;
       *) REPLACE_LOGL=1 ;;
@@ -103,7 +103,7 @@ AC_DEFUN([gl_FUNC_LOGL],
 
 dnl Test whether logl() works.
 dnl On OSF/1 5.1, logl(-0.0L) is NaN.
-dnl On NetBSD 9.0, the result is accurate to only 16 digits.
+dnl On NetBSD 9.3, the result is accurate to only 16 digits.
 AC_DEFUN([gl_FUNC_LOGL_WORKS],
 [
   AC_REQUIRE([AC_PROG_CC])
@@ -166,7 +166,7 @@ int main (int argc, char *argv[])
     if (!(gy + gy == gy))
       result |= 1;
   }
-  /* This test fails on musl 1.2.2/arm64, musl 1.2.2/s390x, NetBSD 9.0.  */
+  /* This test fails on musl 1.2.2/arm64, musl 1.2.2/s390x, NetBSD 9.3.  */
   {
     const long double TWO_LDBL_MANT_DIG = /* 2^LDBL_MANT_DIG */
       (long double) (1U << ((LDBL_MANT_DIG - 1) / 5))
@@ -191,7 +191,7 @@ int main (int argc, char *argv[])
                                # Guess no on musl systems.
            *-musl* | midipix*) gl_cv_func_logl_works="guessing no" ;;
                                # Guess yes on native Windows.
-           mingw*)             gl_cv_func_logl_works="guessing yes" ;;
+           mingw* | windows*)  gl_cv_func_logl_works="guessing yes" ;;
                                # If we don't know, obey --enable-cross-guesses.
            *)                  gl_cv_func_logl_works="$gl_cross_guess_normal" ;;
          esac

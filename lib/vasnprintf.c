@@ -1,5 +1,5 @@
 /* vsprintf with automatic memory allocation.
-   Copyright (C) 1999, 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2002-2024 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -294,7 +294,7 @@ local_wcsnlen (const wchar_t *s, size_t maxlen)
 static size_t
 wctomb_fallback (char *s, wchar_t wc)
 {
-  static char hex[16] = "0123456789ABCDEF";
+  static char const hex[16] = "0123456789ABCDEF";
 
   s[0] = '\\';
   if (sizeof (wchar_t) > 2 && wc > 0xffff)
@@ -2335,6 +2335,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 
             if (dp->conversion == 'n')
               {
+#if NEED_PRINTF_WITH_N_DIRECTIVE
                 switch (a.arg[dp->arg_index].type)
                   {
                   case TYPE_COUNT_SCHAR_POINTER:
@@ -2379,6 +2380,9 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                   default:
                     abort ();
                   }
+#else
+                abort ();
+#endif
               }
 #if ENABLE_UNISTDIO
             /* The unistdio extensions.  */
@@ -3424,21 +3428,18 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                     {
                       /* Count the number of bytes.  */
                       characters = 0;
-                      if (arg != 0)
-                        {
-                          char cbuf[64]; /* Assume MB_CUR_MAX <= 64.  */
-                          int count;
+                      char cbuf[64]; /* Assume MB_CUR_MAX <= 64.  */
+                      int count;
 # if HAVE_WCRTOMB && !defined GNULIB_defined_mbstate_t
-                          mbstate_t state;
-                          mbszero (&state);
+                      mbstate_t state;
+                      mbszero (&state);
 # endif
 
-                          count = local_wcrtomb (cbuf, arg, &state);
-                          if (count < 0)
-                            /* Cannot convert.  */
-                            goto fail_with_EILSEQ;
-                          characters = count;
-                        }
+                      count = local_wcrtomb (cbuf, arg, &state);
+                      if (count < 0)
+                        /* Cannot convert.  */
+                        goto fail_with_EILSEQ;
+                      characters = count;
                     }
 # if DCHAR_IS_TCHAR
                   else
@@ -3450,7 +3451,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 
 # if !DCHAR_IS_TCHAR
                   /* Convert the string into a piece of temporary memory.  */
-                  if (characters > 0) /* implies arg != 0 */
+                  if (characters > 0)
                     {
                       char cbuf[64]; /* Assume MB_CUR_MAX <= 64.  */
                       int count;
@@ -3507,7 +3508,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                     {
                       /* We know the number of bytes in advance.  */
                       ENSURE_ALLOCATION (xsum (length, characters));
-                      if (characters > 0) /* implies arg != 0 */
+                      if (characters > 0)
                         {
                           int count;
 #  if HAVE_WCRTOMB && !defined GNULIB_defined_mbstate_t
@@ -3524,23 +3525,20 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                     }
                   else
                     {
-                      if (arg != 0)
-                        {
-                          char cbuf[64]; /* Assume MB_CUR_MAX <= 64.  */
-                          int count;
+                      char cbuf[64]; /* Assume MB_CUR_MAX <= 64.  */
+                      int count;
 #  if HAVE_WCRTOMB && !defined GNULIB_defined_mbstate_t
-                          mbstate_t state;
-                          mbszero (&state);
+                      mbstate_t state;
+                      mbszero (&state);
 #  endif
 
-                          count = local_wcrtomb (cbuf, arg, &state);
-                          if (count < 0)
-                            /* Cannot convert.  */
-                            goto fail_with_EILSEQ;
-                          ENSURE_ALLOCATION (xsum (length, count));
-                          memcpy (result + length, cbuf, count);
-                          length += count;
-                        }
+                      count = local_wcrtomb (cbuf, arg, &state);
+                      if (count < 0)
+                        /* Cannot convert.  */
+                        goto fail_with_EILSEQ;
+                      ENSURE_ALLOCATION (xsum (length, count));
+                      memcpy (result + length, cbuf, count);
+                      length += count;
                     }
 # else
                   ENSURE_ALLOCATION_ELSE (xsum (length, tmpdst_len),
@@ -5622,24 +5620,24 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
               {
                 arg_type type = a.arg[dp->arg_index].type;
                 int flags = dp->flags;
-#if (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
+#if (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                 int has_width;
 #endif
-#if !USE_SNPRINTF || WIDE_CHAR_VERSION || !HAVE_SNPRINTF_RETVAL_C99 || USE_MSVC__SNPRINTF || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
+#if !USE_SNPRINTF || WIDE_CHAR_VERSION || !HAVE_SNPRINTF_RETVAL_C99 || USE_MSVC__SNPRINTF || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                 size_t width;
 #endif
-#if !USE_SNPRINTF || (WIDE_CHAR_VERSION && DCHAR_IS_TCHAR) || !HAVE_SNPRINTF_RETVAL_C99 || USE_MSVC__SNPRINTF || (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
+#if !USE_SNPRINTF || (WIDE_CHAR_VERSION && DCHAR_IS_TCHAR) || !HAVE_SNPRINTF_RETVAL_C99 || USE_MSVC__SNPRINTF || (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                 int has_precision;
                 size_t precision;
 #endif
-#if NEED_PRINTF_UNBOUNDED_PRECISION
+#if NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                 int prec_ourselves;
 #else
 #               define prec_ourselves 0
 #endif
 #if (WIDE_CHAR_VERSION && MUSL_LIBC) || NEED_PRINTF_FLAG_LEFTADJUST
 #               define pad_ourselves 1
-#elif !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
+#elif !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                 int pad_ourselves;
 #else
 #               define pad_ourselves 0
@@ -5654,10 +5652,10 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                 TCHAR_T *tmp;
 #endif
 
-#if (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
+#if (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                 has_width = 0;
 #endif
-#if !USE_SNPRINTF || WIDE_CHAR_VERSION || !HAVE_SNPRINTF_RETVAL_C99 || USE_MSVC__SNPRINTF || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
+#if !USE_SNPRINTF || WIDE_CHAR_VERSION || !HAVE_SNPRINTF_RETVAL_C99 || USE_MSVC__SNPRINTF || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                 width = 0;
                 if (dp->width_start != dp->width_end)
                   {
@@ -5685,13 +5683,13 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                           width = xsum (xtimes (width, 10), *digitp++ - '0');
                         while (digitp != dp->width_end);
                       }
-# if (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
+# if (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                     has_width = 1;
 # endif
                   }
 #endif
 
-#if !USE_SNPRINTF || (WIDE_CHAR_VERSION && DCHAR_IS_TCHAR) || !HAVE_SNPRINTF_RETVAL_C99 || USE_MSVC__SNPRINTF || (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
+#if !USE_SNPRINTF || (WIDE_CHAR_VERSION && DCHAR_IS_TCHAR) || !HAVE_SNPRINTF_RETVAL_C99 || USE_MSVC__SNPRINTF || (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                 has_precision = 0;
                 precision = 6;
                 if (dp->precision_start != dp->precision_end)
@@ -5724,9 +5722,10 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 #endif
 
                 /* Decide whether to handle the precision ourselves.  */
-#if NEED_PRINTF_UNBOUNDED_PRECISION
+#if NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                 switch (dp->conversion)
                   {
+# if NEED_PRINTF_UNBOUNDED_PRECISION
                   case 'd': case 'i': case 'u':
                   case 'b':
                   #if SUPPORT_GNU_PRINTF_DIRECTIVES \
@@ -5734,8 +5733,20 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                   case 'B':
                   #endif
                   case 'o':
-                  case 'x': case 'X': case 'p':
                     prec_ourselves = has_precision && (precision > 0);
+                    break;
+# endif
+                  case 'x': case 'X': case 'p':
+                    prec_ourselves =
+                      has_precision
+                      && (0
+# if NEED_PRINTF_FLAG_ALT_PRECISION_ZERO
+                          || (precision == 0)
+# endif
+# if NEED_PRINTF_UNBOUNDED_PRECISION
+                          || (precision > 0)
+# endif
+                         );
                     break;
                   default:
                     prec_ourselves = 0;
@@ -5744,7 +5755,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 #endif
 
                 /* Decide whether to perform the padding ourselves.  */
-#if !((WIDE_CHAR_VERSION && MUSL_LIBC) || NEED_PRINTF_FLAG_LEFTADJUST) && (!DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION)
+#if !((WIDE_CHAR_VERSION && MUSL_LIBC) || NEED_PRINTF_FLAG_LEFTADJUST) && (!DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION)
                 switch (dp->conversion)
                   {
 # if !DCHAR_IS_TCHAR || ENABLE_UNISTDIO
@@ -6508,7 +6519,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                       }
 #endif
 
-#if NEED_PRINTF_UNBOUNDED_PRECISION
+#if NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                     if (prec_ourselves)
                       {
                         /* Handle the precision.  */
@@ -6568,6 +6579,15 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
 
                             count += insert;
                           }
+# if NEED_PRINTF_FLAG_ALT_PRECISION_ZERO
+                        else if (precision == 0
+                                 && move == 1
+                                 && prec_ptr[prefix_count] == '0')
+                          {
+                            /* Replace the "0" result with an empty string.  */
+                            count = prefix_count;
+                          }
+# endif
                       }
 #endif
 
@@ -6722,7 +6742,7 @@ VASNPRINTF (DCHAR_T *resultbuf, size_t *lengthp,
                     /* Here count <= allocated - length.  */
 
                     /* Perform padding.  */
-#if (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
+#if (WIDE_CHAR_VERSION && MUSL_LIBC) || !DCHAR_IS_TCHAR || ENABLE_UNISTDIO || NEED_PRINTF_FLAG_LEFTADJUST || NEED_PRINTF_FLAG_ZERO || NEED_PRINTF_FLAG_ALT_PRECISION_ZERO || NEED_PRINTF_UNBOUNDED_PRECISION
                     if (pad_ourselves && has_width)
                       {
                         size_t w;

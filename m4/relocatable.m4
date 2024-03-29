@@ -1,5 +1,5 @@
-# relocatable.m4 serial 24
-dnl Copyright (C) 2003, 2005-2007, 2009-2023 Free Software Foundation, Inc.
+# relocatable.m4 serial 25
+dnl Copyright (C) 2003, 2005-2007, 2009-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -51,7 +51,7 @@ AC_DEFUN([gl_RELOCATABLE_BODY],
     AC_CHECK_HEADERS([mach-o/dyld.h])
     AC_CHECK_FUNCS([_NSGetExecutablePath])
     case "$host_os" in
-      mingw*) is_noop=yes ;;
+      mingw* | windows*) is_noop=yes ;;
       # For the platforms that support $ORIGIN, see
       # <https://lekensteyn.nl/rpath.html>.
       # glibc systems, Linux with musl libc: yes. Android: no.

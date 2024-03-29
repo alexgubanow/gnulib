@@ -1,5 +1,5 @@
-# locale-ar.m4 serial 10
-dnl Copyright (C) 2003, 2005-2023 Free Software Foundation, Inc.
+# locale-ar.m4 serial 11
+dnl Copyright (C) 2003, 2005-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -69,7 +69,7 @@ int main () {
         # "ge"(!) or "deu"(!) as "German" or "German_Germany.1252",
         # "ja" as "Japanese" or "Japanese_Japan.932",
         # and similar.
-        mingw*)
+        mingw* | windows*)
           # Note that on native Windows, the Arabic locale is
           # "Arabic_Saudi Arabia.1256", and CP1256 is very different from
           # ISO-8859-6, so we cannot use it here.
@@ -84,7 +84,7 @@ int main () {
           #   - The usual locale name:                         ar_SA
           #   - The locale name with explicit encoding suffix: ar_SA.ISO-8859-6
           #   - The HP-UX locale name:                         ar_SA.iso88596
-          #   - The Solaris 7 locale name:                     ar
+          #   - The Solaris 10 locale name:                    ar
           # Also try ar_EG instead of ar_SA because Egypt is a large country too.
           for gt_cv_locale_ar in ar_SA ar_SA.ISO-8859-6 ar_SA.iso88596 ar_EG ar_EG.ISO-8859-6 ar_EG.iso88596 ar none; do
             if test $gt_cv_locale_ar = none; then

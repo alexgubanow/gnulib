@@ -1,5 +1,5 @@
 /* Removes leading and/or trailing whitespaces
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,89 +26,87 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "mbchar.h"
-#include "mbiterf.h"
+#if GNULIB_MCEL_PREFER
+# include "mcel.h"
+#else
+# include "mbchar.h"
+# include "mbuiterf.h"
+#endif
 #include "xalloc.h"
 
 char *
 trim2 (const char *s, int how)
 {
-  char *d;
-
-  d = strdup (s);
-
-  if (!d)
-    xalloc_die ();
+  const char *start = s;
+  const char *end;
 
   if (MB_CUR_MAX > 1)
     {
-      /* Trim leading whitespaces. */
+#if GNULIB_MCEL_PREFER
+      /* Skip leading whitespace. */
       if (how != TRIM_TRAILING)
-        {
-          const char *d_end = d + strlen (d);
-          mbif_state_t state;
-          char *iter;
-          for (mbif_init (state), iter = d; mbif_avail (state, iter, d_end); )
-            {
-              mbchar_t cur = mbif_next (state, iter, d_end);
+        for (mcel_t g; *start; start += g.len)
+          {
+            g = mcel_scanz (start);
+            if (!c32isspace (g.ch))
+              break;
+          }
 
-              if (!mb_isspace (cur))
-                break;
-
-              iter += mb_len (cur);
-            }
-
-          memmove (d, iter, strlen (iter) + 1);
-        }
-
-      /* Trim trailing whitespaces. */
+      /* Find start of any trailing whitespace.  */
       if (how != TRIM_LEADING)
-        {
-          char *start_of_spaces = NULL;
+        for (const char *p = end = start; *p; )
+          {
+            mcel_t g = mcel_scanz (p);
+            p += g.len;
+            if (!c32isspace (g.ch))
+              end = p;
+          }
+#else
+      mbuif_state_t state;
+      mbuif_init (state);
 
-          const char *d_end = d + strlen (d);
-          mbif_state_t state;
-          char *iter;
-          for (mbif_init (state), iter = d; mbif_avail (state, iter, d_end); )
-            {
-              mbchar_t cur = mbif_next (state, iter, d_end);
+      /* Skip leading whitespace. */
+      if (how != TRIM_TRAILING)
+        while (mbuif_avail (state, start))
+          {
+            mbchar_t cur = mbuif_next (state, start);
+            if (!mb_isspace (cur))
+              break;
+            start += mb_len (cur);
+          }
 
-              if (mb_isspace (cur))
-                {
-                  if (start_of_spaces == NULL)
-                    start_of_spaces = iter;
-                }
-              else
-                start_of_spaces = NULL;
-
-              iter += mb_len (cur);
-            }
-
-          if (start_of_spaces != NULL)
-            *start_of_spaces = '\0';
-        }
+      /* Find start of any trailing whitespace.  */
+      if (how != TRIM_LEADING)
+        for (const char *p = end = start; mbuif_avail (state, p); )
+          {
+            mbchar_t cur = mbuif_next (state, p);
+            p += mb_len (cur);
+            if (!mb_isspace (cur))
+              end = p;
+          }
+#endif
     }
   else
     {
-      char *p;
-
-      /* Trim leading whitespaces. */
+      /* Skip leading whitespace. */
       if (how != TRIM_TRAILING)
-        {
-          for (p = d; *p && isspace ((unsigned char) *p); p++)
-            ;
+        while (isspace ((unsigned char) *start))
+          start++;
 
-          memmove (d, p, strlen (p) + 1);
-        }
-
-      /* Trim trailing whitespaces. */
+      /* Find start of any trailing whitespace.  */
       if (how != TRIM_LEADING)
-        {
-          for (p = d + strlen (d) - 1;
-               p >= d && isspace ((unsigned char) *p); p--)
-            *p = '\0';
-        }
+        for (const char *p = end = start; *p; )
+          if (!isspace ((unsigned char) *p++))
+            end = p;
     }
+
+  /* Create trimmed copy.  */
+  size_t dlen = how == TRIM_LEADING ? strlen (start) : end - start;
+  char *d = malloc (dlen + 1);
+  if (!d)
+    xalloc_die ();
+  char *d_end = mempcpy (d, start, dlen);
+  *d_end = '\0';
 
   return d;
 }

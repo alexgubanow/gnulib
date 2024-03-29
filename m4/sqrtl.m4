@@ -1,5 +1,5 @@
-# sqrtl.m4 serial 11
-dnl Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# sqrtl.m4 serial 13
+dnl Copyright (C) 2010-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -33,7 +33,7 @@ AC_DEFUN([gl_FUNC_SQRTL],
     AC_CACHE_CHECK([whether sqrtl() can be used with libm],
       [gl_cv_func_sqrtl_in_libm],
       [
-        save_LIBS="$LIBS"
+        saved_LIBS="$LIBS"
         LIBS="$LIBS -lm"
         AC_LINK_IFELSE(
           [AC_LANG_PROGRAM(
@@ -47,7 +47,7 @@ AC_DEFUN([gl_FUNC_SQRTL],
                       || sqrtl (x) > 0.4;]])],
           [gl_cv_func_sqrtl_in_libm=yes],
           [gl_cv_func_sqrtl_in_libm=no])
-        LIBS="$save_LIBS"
+        LIBS="$saved_LIBS"
       ])
     if test $gl_cv_func_sqrtl_in_libm = yes; then
       SQRTL_LIBM=-lm
@@ -59,10 +59,10 @@ AC_DEFUN([gl_FUNC_SQRTL],
     dnl Mac OS X 10.3 has sqrtl() in libc but doesn't declare it in <math.h>.
     AC_CHECK_DECL([sqrtl], , [HAVE_DECL_SQRTL=0], [[#include <math.h>]])
 
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $SQRTL_LIBM"
     gl_FUNC_SQRTL_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_sqrtl_works" in
       *yes) ;;
       *) REPLACE_SQRTL=1 ;;
@@ -154,10 +154,10 @@ int main ()
         [gl_cv_func_sqrtl_works=yes],
         [gl_cv_func_sqrtl_works=no],
         [case "$host_os" in
-           openbsd*) gl_cv_func_sqrtl_works="guessing no" ;;
-                     # Guess yes on native Windows.
-           mingw*)   gl_cv_func_sqrtl_works="guessing yes" ;;
-           *)        gl_cv_func_sqrtl_works="guessing yes" ;;
+           openbsd*)          gl_cv_func_sqrtl_works="guessing no" ;;
+                              # Guess yes on native Windows.
+           mingw* | windows*) gl_cv_func_sqrtl_works="guessing yes" ;;
+           *)                 gl_cv_func_sqrtl_works="guessing yes" ;;
          esac
         ])
     ])

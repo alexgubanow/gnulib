@@ -1,5 +1,5 @@
-# tanhf.m4 serial 3
-dnl Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# tanhf.m4 serial 4
+dnl Copyright (C) 2011-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -14,10 +14,10 @@ AC_DEFUN([gl_FUNC_TANHF],
 
   dnl Test whether tanhf() exists. Assume that tanhf(), if it exists, is
   dnl defined in the same library as tanh().
-  save_LIBS="$LIBS"
+  saved_LIBS="$LIBS"
   LIBS="$LIBS $TANH_LIBM"
   AC_CHECK_FUNCS([tanhf])
-  LIBS="$save_LIBS"
+  LIBS="$saved_LIBS"
   if test $ac_cv_func_tanhf = yes; then
     TANHF_LIBM="$TANH_LIBM"
   else

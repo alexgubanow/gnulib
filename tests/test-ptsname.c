@@ -1,5 +1,5 @@
 /* Test of ptsname(3).
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ same_slave (const char *slave_name1, const char *slave_name2)
   return (strcmp (slave_name1, slave_name2) == 0
           || (stat (slave_name1, &statbuf1) >= 0
               && stat (slave_name2, &statbuf2) >= 0
-              && SAME_INODE (statbuf1, statbuf2)));
+              && psame_inode (&statbuf1, &statbuf2)));
 }
 
 int

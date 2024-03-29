@@ -1,5 +1,5 @@
 /* Localization of proper names.
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2006.
 
    This program is free software: you can redistribute it and/or modify
@@ -35,8 +35,12 @@
 #endif
 
 #include "trim.h"
-#include "mbchar.h"
-#include "mbuiter.h"
+#if GNULIB_MCEL_PREFER
+# include "mcel.h"
+#else
+# include "mbchar.h"
+# include "mbuiter.h"
+#endif
 #include "localcharset.h"
 #include "c-strcase.h"
 #include "xstriconv.h"
@@ -55,16 +59,47 @@ mbsstr_trimmed_wordbounded (const char *string, const char *sub)
 {
   char *tsub = trim (sub);
   bool found = false;
+  bool multibyte_locale = MB_CUR_MAX > 1;
+  size_t tsublen;
+  if (! multibyte_locale)
+    tsublen = strlen (tsub);
 
-  for (; *string != '\0';)
+  while (*string != '\0')
     {
       const char *tsub_in_string = mbsstr (string, tsub);
       if (tsub_in_string == NULL)
         break;
       else
         {
-          if (MB_CUR_MAX > 1)
+          if (multibyte_locale)
             {
+#if GNULIB_MCEL_PREFER
+              char const *string_iter = string;
+
+              char32_t last_char_before_tsub = 0;
+              while (string_iter < tsub_in_string)
+                {
+                  mcel_t g = mcel_scanz (string_iter);
+                  last_char_before_tsub = g.ch;
+                  string_iter += g.len;
+                }
+
+              string_iter = tsub_in_string;
+              for (char const *tsub_iter = tsub; *tsub_iter;
+                   tsub_iter += mcel_scanz (tsub_iter).len)
+                string_iter += mcel_scanz (string_iter).len;
+
+              if (!c32isalnum (last_char_before_tsub)
+                  && !c32isalnum (mcel_scanz (string_iter).ch))
+                {
+                  found = true;
+                  break;
+                }
+
+              if (!*tsub_in_string)
+                break;
+              string = tsub_in_string + mcel_scanz (tsub_in_string).len;
+#else
               mbui_iterator_t string_iter;
               bool word_boundary_before;
               bool word_boundary_after;
@@ -117,25 +152,13 @@ mbsstr_trimmed_wordbounded (const char *string, const char *sub)
               if (!mbui_avail (string_iter))
                 break;
               string = tsub_in_string + mb_len (mbui_cur (string_iter));
+#endif
             }
           else
             {
-              bool word_boundary_before;
-              const char *p;
-              bool word_boundary_after;
-
-              word_boundary_before = true;
-              if (string < tsub_in_string)
-                if (isalnum ((unsigned char) tsub_in_string[-1]))
-                  word_boundary_before = false;
-
-              p = tsub_in_string + strlen (tsub);
-              word_boundary_after = true;
-              if (*p != '\0')
-                if (isalnum ((unsigned char) *p))
-                  word_boundary_after = false;
-
-              if (word_boundary_before && word_boundary_after)
+              if ((string == tsub_in_string
+                   || !isalnum ((unsigned char) tsub_in_string[-1]))
+                  && !isalnum ((unsigned char) tsub_in_string[tsublen]))
                 {
                   found = true;
                   break;
@@ -205,7 +228,8 @@ proper_name_utf8 (const char *name_ascii, const char *name_utf8)
 
 # if (((__GLIBC__ == 2 && __GLIBC_MINOR__ >= 2) || __GLIBC__ > 2) \
       && !defined __UCLIBC__) \
-     || _LIBICONV_VERSION >= 0x0105
+     || _LIBICONV_VERSION >= 0x0105 \
+     || defined ICONV_SET_TRANSLITERATE
       {
         char *converted_translit;
 
@@ -221,7 +245,7 @@ proper_name_utf8 (const char *name_ascii, const char *name_utf8)
 
         if (converted_translit != NULL)
           {
-#  if !_LIBICONV_VERSION
+#  if !_LIBICONV_VERSION || (_LIBICONV_VERSION == 0x10b && defined __APPLE__)
             /* Don't use the transliteration if it added question marks.
                glibc's transliteration falls back to question marks; libiconv's
                transliteration does not.

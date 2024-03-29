@@ -1,5 +1,5 @@
-# modff.m4 serial 12
-dnl Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# modff.m4 serial 15
+dnl Copyright (C) 2011-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -26,7 +26,7 @@ AC_DEFUN([gl_FUNC_MODFF],
         AC_CACHE_CHECK([whether modff works according to ISO C 99 with IEC 60559],
           [gl_cv_func_modff_ieee],
           [
-            save_LIBS="$LIBS"
+            saved_LIBS="$LIBS"
             LIBS="$LIBS $MODFF_LIBM"
             AC_RUN_IFELSE(
               [AC_LANG_SOURCE([[
@@ -74,7 +74,8 @@ int main (int argc, char *argv[])
                                      # Guess yes on musl systems.
                  *-musl* | midipix*) gl_cv_func_modff_ieee="guessing yes" ;;
                                      # Guess yes on MSVC, no on mingw.
-                 mingw*)             AC_EGREP_CPP([Known], [
+                 windows*-msvc*)     gl_cv_func_modff_ieee="guessing yes" ;;
+                 mingw* | windows*)  AC_EGREP_CPP([Known], [
 #ifdef _MSC_VER
  Known
 #endif
@@ -86,7 +87,7 @@ int main (int argc, char *argv[])
                  *)                  gl_cv_func_modff_ieee="$gl_cross_guess_normal" ;;
                esac
               ])
-            LIBS="$save_LIBS"
+            LIBS="$saved_LIBS"
           ])
         case "$gl_cv_func_modff_ieee" in
           *yes) ;;

@@ -1,5 +1,5 @@
 /* Test of ldexp*() function family.
-   Copyright (C) 2007-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Written by Bruno Haible <bruno@clisp.org>, 2007, 2010.  */
+
+#include <limits.h>
 
 static void
 test_function (void)
@@ -99,6 +101,7 @@ test_function (void)
         ASSERT (y == expected);
       }
       y = LDEXP (x, -5); ASSERT (y == x * 0.03125L);
+      y = LDEXP (x, INT_MIN); ASSERT (y == 0);
     }
   for (i = 1, x = L_(1.73205); i >= MIN_EXP; i--, x *= L_(0.5))
     {

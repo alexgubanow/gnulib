@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005, 2010-2023 Free Software Foundation, Inc.
+ * Copyright (C) 2005, 2010-2024 Free Software Foundation, Inc.
  * Written by Simon Josefsson
  *
  * This program is free software; you can redistribute it and/or modify
@@ -35,12 +35,12 @@ main (int argc, char *argv[])
     }
 
   {
-    char *key =
+    const char *key =
       "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b";
     size_t key_len = 16;
-    char *data = "Hi There";
+    const char *data = "Hi There";
     size_t data_len = 8;
-    char *digest =
+    const char *digest =
       "\x67\x5b\x0b\x3a\x1b\x4d\xdf\x4e\x12\x48"
       "\x72\xda\x6c\x2f\x63\x2b\xfe\xd9\x57\xe9";
     char out[GC_SHA1_DIGEST_SIZE];

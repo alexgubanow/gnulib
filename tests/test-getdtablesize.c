@@ -1,5 +1,5 @@
 /* Test of getdtablesize() function.
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ SIGNATURE_CHECK (getdtablesize, int, (void));
 #endif
 
 int
-main (int argc, char *argv[])
+main ()
 {
   ASSERT (getdtablesize () >= 3);
   ASSERT (dup2 (0, getdtablesize() - 1) == getdtablesize () - 1);

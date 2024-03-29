@@ -1,5 +1,5 @@
 /* Test of explicit_bzero() function.
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -39,6 +39,11 @@ static char zero[SECRET_SIZE] = { 0 };
 /* Enable this to verify that the test is effective.  */
 #if 0
 # define explicit_bzero(a, n)  memset (a, '\0', n)
+#endif
+
+/* Suppress GCC 13.2.1 false alarm, as this test needs a dangling pointer.  */
+#if 12 <= __GNUC__
+# pragma GCC diagnostic ignored "-Wdangling-pointer"
 #endif
 
 /* =================== Verify operation on static memory =================== */
@@ -133,6 +138,12 @@ test_heap (void)
    does not eliminate a call to explicit_bzero, even if data flow analysis
    reveals that the stack area is dead at the end of the function.  */
 static bool _GL_ATTRIBUTE_NOINLINE
+#if __GNUC__ + (__GNUC_MINOR__ >= 5) > 4
+__attribute__ ((__noclone__))
+#endif
+#if __GNUC__ >= 8
+__attribute__ ((__noipa__))
+#endif
 do_secret_stuff (int volatile pass, char *volatile *volatile last_stackbuf)
 {
   char stackbuf[SECRET_SIZE];

@@ -1,5 +1,5 @@
 /* Compare two memory areas with possibly different lengths, case-insensitive.
-   Copyright (C) 1998-1999, 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-1999, 2005-2024 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2009,
    based on earlier glibc code.
 
@@ -25,7 +25,11 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#include "mbiterf.h"
+#if GNULIB_MCEL_PREFER
+# include "mcel.h"
+#else
+# include "mbiterf.h"
+#endif
 
 int
 mbmemcasecmp (const char *s1, size_t n1, const char *s2, size_t n2)
@@ -33,19 +37,29 @@ mbmemcasecmp (const char *s1, size_t n1, const char *s2, size_t n2)
   if (s1 == s2)
     return _GL_CMP (n1, n2);
 
+  const char *iter1 = s1;
+  const char *iter2 = s2;
+  const char *s1_end = s1 + n1;
+  const char *s2_end = s2 + n2;
+
   if (MB_CUR_MAX > 1)
     {
-      const char *s1_end = s1 + n1;
+#if GNULIB_MCEL_PREFER
+      while ((iter1 < s1_end) & (iter2 < s2_end))
+        {
+          mcel_t g1 = mcel_scan (iter1, s1_end); iter1 += g1.len;
+          mcel_t g2 = mcel_scan (iter2, s2_end); iter2 += g2.len;
+          int cmp = mcel_tocmp (c32tolower, g1, g2);
+          if (cmp)
+            return cmp;
+        }
+      return (iter1 < s1_end) - (iter2 < s2_end);
+#else
       mbif_state_t state1;
-      const char *iter1;
       mbif_init (state1);
-      iter1 = s1;
 
-      const char *s2_end = s2 + n2;
       mbif_state_t state2;
-      const char *iter2;
       mbif_init (state2);
-      iter2 = s2;
 
       while (mbif_avail (state1, iter1, s1_end)
              && mbif_avail (state2, iter2, s2_end))
@@ -67,35 +81,34 @@ mbmemcasecmp (const char *s1, size_t n1, const char *s2, size_t n2)
         /* s1 terminated before s2.  */
         return -1;
       return 0;
+#endif
     }
   else
     {
-      const unsigned char *s1_end = (const unsigned char *) (s1 + n1);
-      const unsigned char *s2_end = (const unsigned char *) (s2 + n2);
-      const unsigned char *p1 = (const unsigned char *) s1;
-      const unsigned char *p2 = (const unsigned char *) s2;
-
-      while (p1 < s1_end && p2 < s2_end)
+      while (iter1 < s1_end && iter2 < s2_end)
         {
-          unsigned char c1 = tolower (*p1);
-          unsigned char c2 = tolower (*p2);
-          if (c1 != c2)
+          unsigned char c1 = *iter1++;
+          unsigned char c2 = *iter2++;
+          /* On machines where 'char' and 'int' are types of the same size,
+             the difference of two 'unsigned char' values - including
+             the sign bit - doesn't fit in an 'int'.  */
+          int cmp = UCHAR_MAX <= INT_MAX ? c1 - c2 : _GL_CMP (c1, c2);
+          if (cmp != 0)
             {
-              if (UCHAR_MAX <= INT_MAX)
-                return c1 - c2;
-              else
-                /* On machines where 'char' and 'int' are types of the same
-                   size, the difference of two 'unsigned char' values
-                   - including the sign bit - doesn't fit in an 'int'.  */
-                return _GL_CMP (c1, c2);
+              c1 = tolower (c1);
+              if (c1 != c2)
+                {
+                  c2 = tolower (c2);
+                  cmp = UCHAR_MAX <= INT_MAX ? c1 - c2 : _GL_CMP (c1, c2);
+                  if (cmp != 0)
+                    return cmp;
+                }
             }
-          ++p1;
-          ++p2;
         }
-      if (p1 < s1_end)
+      if (iter1 < s1_end)
         /* s2 terminated before s1.  */
         return 1;
-      if (p2 < s2_end)
+      if (iter2 < s2_end)
         /* s1 terminated before s2.  */
         return -1;
       return 0;

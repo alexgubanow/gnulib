@@ -1,5 +1,5 @@
 /* Test of rounding towards positive infinity.
-   Copyright (C) 2007-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ dummy (float f)
 int
 main (int argc, _GL_UNUSED char **argv)
 {
-  float (*my_ceilf) (float) = argc ? ceilf : dummy;
+  float (* volatile my_ceilf) (float) = argc ? ceilf : dummy;
 
   /* Zero.  */
   ASSERT (my_ceilf (0.0f) == 0.0f);

@@ -1,5 +1,5 @@
-# chmod.m4 serial 2
-dnl Copyright (C) 2004-2023 Free Software Foundation, Inc.
+# chmod.m4 serial 3
+dnl Copyright (C) 2004-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -59,7 +59,7 @@ AC_DEFUN([gl_FUNC_CHMOD],
        [gl_cv_func_chmod_works=no],
        [case "$host_os" in
           # Guess no on AIX, IRIX, native Windows.
-          aix* | irix* | mingw*)
+          aix* | irix* | mingw* | windows*)
             gl_cv_func_chmod_works="guessing no" ;;
           # Guess yes on glibc, musl libc, macOS, FreeBSD, NetBSD, OpenBSD, Solaris, Haiku, Cygwin.
           *-gnu* | gnu* | *-musl* | darwin* | freebsd* | midnightbsd* | netbsd* | openbsd* | solaris* | haiku* | cygwin*)

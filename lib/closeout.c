@@ -1,6 +1,6 @@
 /* Close standard output and standard error, exiting with a diagnostic on error.
 
-   Copyright (C) 1998-2002, 2004, 2006, 2008-2023 Free Software Foundation,
+   Copyright (C) 1998-2002, 2004, 2006, 2008-2024 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -28,7 +28,7 @@
 #define _(msgid) gettext (msgid)
 
 #include "close-stream.h"
-#include "error.h"
+#include <error.h>
 #include "exitfail.h"
 #include "quotearg.h"
 

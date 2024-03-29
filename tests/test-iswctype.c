@@ -1,5 +1,5 @@
 /* Test of wide character properties.
-   Copyright (C) 2023 Free Software Foundation, Inc.
+   Copyright (C) 2023-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -53,10 +53,38 @@ main (int argc, char *argv[])
 
   desc = wctype ("punct");
   ASSERT (desc != (wctype_t) 0);
+  ASSERT (iswctype (L'!', desc));
+  ASSERT (iswctype (L'"', desc));
+  ASSERT (iswctype (L'#', desc));
   ASSERT (iswctype (L'$', desc));
+  ASSERT (iswctype (L'%', desc));
+  ASSERT (iswctype (L'&', desc));
+  ASSERT (iswctype (L'\'', desc));
+  ASSERT (iswctype (L'(', desc));
+  ASSERT (iswctype (L')', desc));
+  ASSERT (iswctype (L'*', desc));
+  ASSERT (iswctype (L'+', desc));
+  ASSERT (iswctype (L',', desc));
+  ASSERT (iswctype (L'-', desc));
   ASSERT (iswctype (L'.', desc));
+  ASSERT (iswctype (L'/', desc));
+  ASSERT (iswctype (L':', desc));
+  ASSERT (iswctype (L';', desc));
   ASSERT (iswctype (L'<', desc));
+  ASSERT (iswctype (L'=', desc));
   ASSERT (iswctype (L'>', desc));
+  ASSERT (iswctype (L'?', desc));
+  ASSERT (iswctype (L'@', desc));
+  ASSERT (iswctype (L'[', desc));
+  ASSERT (iswctype (L'\\', desc));
+  ASSERT (iswctype (L']', desc));
+  ASSERT (iswctype (L'^', desc));
+  ASSERT (iswctype (L'_', desc));
+  ASSERT (iswctype (L'`', desc));
+  ASSERT (iswctype (L'{', desc));
+  ASSERT (iswctype (L'|', desc));
+  ASSERT (iswctype (L'}', desc));
+  ASSERT (iswctype (L'~', desc));
   ASSERT (! iswctype (L' ', desc));
   ASSERT (! iswctype (L'a', desc));
   ASSERT (! iswctype (L'1', desc));

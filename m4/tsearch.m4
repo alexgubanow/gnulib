@@ -1,5 +1,5 @@
-# tsearch.m4 serial 12
-dnl Copyright (C) 2006-2023 Free Software Foundation, Inc.
+# tsearch.m4 serial 13
+dnl Copyright (C) 2006-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -39,10 +39,10 @@ main ()
   return result;
 }]])], [gl_cv_func_tdelete_works=yes], [gl_cv_func_tdelete_works=no],
             [case "$host_os" in
-               openbsd*) gl_cv_func_tdelete_works="guessing no" ;;
-                         # Guess yes on native Windows.
-               mingw*)   gl_cv_func_tdelete_works="guessing yes" ;;
-               *)        gl_cv_func_tdelete_works="guessing yes" ;;
+               openbsd*)            gl_cv_func_tdelete_works="guessing no" ;;
+                                    # Guess yes on native Windows.
+               mingw* | windows*)   gl_cv_func_tdelete_works="guessing yes" ;;
+               *)                   gl_cv_func_tdelete_works="guessing yes" ;;
              esac
             ])
       ])

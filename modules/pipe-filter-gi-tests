@@ -8,8 +8,10 @@ tests/test-pipe-filter-gi2-child.c
 tests/macros.h
 
 Depends-on:
+c99
 binary-io
 c-ctype
+snan
 read-file
 full-write
 usleep

@@ -1,5 +1,5 @@
 /* Test of getcwd() function.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -262,7 +262,7 @@ test_long_name (void)
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
   int err1 = test_abort_bug ();
   int err2 = test_long_name ();

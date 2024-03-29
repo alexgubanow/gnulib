@@ -5,15 +5,17 @@ tests/test-vasnwprintf-posix2.c
 tests/test-vasnwprintf-posix3.c
 tests/minus-zero.h
 tests/infinity.h
-tests/nan.h
 tests/macros.h
 m4/musl.m4
 m4/locale-fr.m4
 m4/codeset.m4
 
 Depends-on:
+c99
 stdint
 float
+nan
+snan
 setlocale
 wcscmp
 wcsspn

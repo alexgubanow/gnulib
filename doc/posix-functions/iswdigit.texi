@@ -4,7 +4,7 @@
 
 POSIX specification:@* @url{https://pubs.opengroup.org/onlinepubs/9699919799/functions/iswdigit.html}
 
-Gnulib module: wctype-h
+Gnulib module: iswdigit
 
 Portability problems fixed by Gnulib:
 @itemize
@@ -17,7 +17,7 @@ on some platforms:
 OS X 10.8.
 @item
 This function is not ISO C 99 compliant on some platforms:
-FreeBSD 13.0, NetBSD 9.0, Solaris 11.4, mingw, MSVC 14.
+FreeBSD 14.0, NetBSD 9.0, Solaris 11.4, mingw, MSVC 14.
 @end itemize
 
 Portability problems not fixed by Gnulib:

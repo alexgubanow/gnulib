@@ -1,5 +1,5 @@
-# log2l.m4 serial 6
-dnl Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# log2l.m4 serial 8
+dnl Copyright (C) 2010-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -15,10 +15,10 @@ AC_DEFUN([gl_FUNC_LOG2L],
 
   dnl Test whether log2l() exists. Assume that log2l(), if it exists, is
   dnl defined in the same library as log2().
-  save_LIBS="$LIBS"
+  saved_LIBS="$LIBS"
   LIBS="$LIBS $LOG2_LIBM"
   gl_CHECK_FUNCS_ANDROID([log2l], [[#include <math.h>]])
-  LIBS="$save_LIBS"
+  LIBS="$saved_LIBS"
   if test $ac_cv_func_log2l = yes; then
     LOG2L_LIBM="$LOG2_LIBM"
     HAVE_LOG2L=1
@@ -26,10 +26,10 @@ AC_DEFUN([gl_FUNC_LOG2L],
     dnl IRIX 6.5 has log2l() in libm but doesn't declare it in <math.h>.
     AC_CHECK_DECL([log2l], , [HAVE_DECL_LOG2L=0], [[#include <math.h>]])
 
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $LOG2L_LIBM"
     gl_FUNC_LOG2L_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_log2l_works" in
       *yes) ;;
       *) REPLACE_LOG2L=1 ;;
@@ -172,7 +172,7 @@ int main (int argc, char *argv[])
                                # Guess no on OSF/1.
            osf*)               gl_cv_func_log2l_works="guessing no" ;;
                                # Guess yes on native Windows.
-           mingw*)             gl_cv_func_log2l_works="guessing yes" ;;
+           mingw* | windows*)  gl_cv_func_log2l_works="guessing yes" ;;
                                # If we don't know, obey --enable-cross-guesses.
            *)                  gl_cv_func_log2l_works="$gl_cross_guess_normal" ;;
          esac

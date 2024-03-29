@@ -1,5 +1,5 @@
 /* Test renameatu.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -204,6 +204,13 @@ main (void)
   ASSERT ((renameatu (dfd, BASE "sub2/file", dfd, BASE "17", RENAME_NOREPLACE)
            == -1)
           && errno == EEXIST);
+
+  errno = 0;
+  ASSERT (renameatu (dfd, BASE "sub2", dfd, BASE "sub1", RENAME_EXCHANGE) < 0
+          ? errno == EINVAL || errno == ENOSYS || errno == ENOTSUP
+          : (renameatu (dfd, BASE "sub1/file", dfd, BASE "sub2/file",
+                        RENAME_NOREPLACE)
+             == 0));
 
   /* Cleanup.  */
   ASSERT (close (dfd) == 0);

@@ -1,5 +1,5 @@
-# ilogb.m4 serial 7
-dnl Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# ilogb.m4 serial 10
+dnl Copyright (C) 2010-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -12,10 +12,10 @@ AC_DEFUN([gl_FUNC_ILOGB],
   gl_MATHFUNC([ilogb], [int], [(double)])
   if test $gl_cv_func_ilogb_no_libm = yes \
      || test $gl_cv_func_ilogb_in_libm = yes; then
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $ILOGB_LIBM"
     gl_FUNC_ILOGB_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_ilogb_works" in
       *yes) ;;
       *) REPLACE_ILOGB=1 ;;
@@ -44,7 +44,8 @@ AC_DEFUN([gl_FUNC_ILOGB],
 
 dnl Test whether ilogb() works.
 dnl On OpenBSD 6.7, AIX 5.1, ilogb(0.0) is wrong.
-dnl On AIX 7.1 in 64-bit mode, ilogb(2^(DBL_MIN_EXP-1)) is wrong.
+dnl On Mac OS X 10.5 in 64-bit mode and on AIX 7.1 in 64-bit mode,
+dnl ilogb(2^(DBL_MIN_EXP-1)) is wrong.
 dnl On NetBSD 7.1, OpenBSD 6.7, ilogb(Infinity) is wrong.
 dnl On NetBSD 7.1, OpenBSD 6.7, ilogb(NaN) is wrong.
 AC_DEFUN([gl_FUNC_ILOGB_WORKS],
@@ -95,7 +96,8 @@ int main (int argc, char *argv[])
     if (my_ilogb (x) != FP_ILOGB0)
       result |= 1;
   }
-  /* This test fails on AIX 7.1 in 64-bit mode.  */
+  /* This test fails on Mac OS X 10.5 in 64-bit mode and on
+     AIX 7.1 in 64-bit mode.  */
   {
     int i;
     x = 0.5;
@@ -123,10 +125,11 @@ int main (int argc, char *argv[])
         [gl_cv_func_ilogb_works=no],
         [case "$host_os" in
            aix* | openbsd* | netbsd* | solaris*)
-                   gl_cv_func_ilogb_works="guessing no" ;;
-                   # Guess yes on native Windows.
-           mingw*) gl_cv_func_ilogb_works="guessing yes" ;;
-           *)      gl_cv_func_ilogb_works="guessing yes" ;;
+              gl_cv_func_ilogb_works="guessing no" ;;
+              # Guess yes on native Windows.
+           mingw* | windows*)
+              gl_cv_func_ilogb_works="guessing yes" ;;
+           *) gl_cv_func_ilogb_works="guessing yes" ;;
          esac
         ])
     ])

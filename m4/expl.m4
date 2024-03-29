@@ -1,5 +1,5 @@
-# expl.m4 serial 19
-dnl Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# expl.m4 serial 22
+dnl Copyright (C) 2010-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -34,7 +34,7 @@ AC_DEFUN([gl_FUNC_EXPL],
     AC_CACHE_CHECK([whether expl() can be used with libm],
       [gl_cv_func_expl_in_libm],
       [
-        save_LIBS="$LIBS"
+        saved_LIBS="$LIBS"
         LIBS="$LIBS -lm"
         AC_LINK_IFELSE(
           [AC_LANG_PROGRAM(
@@ -48,7 +48,7 @@ AC_DEFUN([gl_FUNC_EXPL],
                       || expl (x) > 1.5;]])],
           [gl_cv_func_expl_in_libm=yes],
           [gl_cv_func_expl_in_libm=no])
-        LIBS="$save_LIBS"
+        LIBS="$saved_LIBS"
       ])
     if test $gl_cv_func_expl_in_libm = yes; then
       EXPL_LIBM=-lm
@@ -64,7 +64,7 @@ AC_DEFUN([gl_FUNC_EXPL],
       AC_CACHE_CHECK([whether expl works],
         [gl_cv_func_expl_works],
         [
-          save_LIBS="$LIBS"
+          saved_LIBS="$LIBS"
           LIBS="$LIBS $EXPL_LIBM"
           AC_RUN_IFELSE(
             [AC_LANG_SOURCE([[
@@ -129,7 +129,7 @@ int main (int argc, char *argv[])
     if (isnan (expl (x1)) || isnan (expl (x2)) || isnan (expl (x3)))
       result |= 2;
   }
-  /* This test fails on musl 1.2.2/arm64, musl 1.2.2/s390x, NetBSD 9.0.  */
+  /* This test fails on musl 1.2.2/arm64, musl 1.2.2/s390x, NetBSD 9.3.  */
   {
     const long double TWO_LDBL_MANT_DIG = /* 2^LDBL_MANT_DIG */
       (long double) (1U << ((LDBL_MANT_DIG - 1) / 5))
@@ -153,12 +153,12 @@ int main (int argc, char *argv[])
                                    # Guess no on musl systems.
                *-musl* | midipix*) gl_cv_func_expl_works="guessing no" ;;
                                    # Guess yes on native Windows.
-               mingw*)             gl_cv_func_expl_works="guessing yes" ;;
+               mingw* | windows*)  gl_cv_func_expl_works="guessing yes" ;;
                                    # If we don't know, obey --enable-cross-guesses.
                *)                  gl_cv_func_expl_works="$gl_cross_guess_normal" ;;
              esac
             ])
-          LIBS="$save_LIBS"
+          LIBS="$saved_LIBS"
         ])
       case "$gl_cv_func_expl_works" in
         *yes) ;;

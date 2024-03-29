@@ -1,5 +1,5 @@
 /* Test of pthread_sigmask in a multi-threaded program.
-   Copyright (C) 2011-2023 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ static pthread_t main_thread;
 static pthread_t killer_thread;
 
 static void *
-killer_thread_func (void *arg)
+killer_thread_func (_GL_UNUSED void *arg)
 {
   sleep (1);
   pthread_kill (main_thread, SIGINT);
@@ -43,13 +43,13 @@ killer_thread_func (void *arg)
 static volatile int sigint_occurred;
 
 static void
-sigint_handler (int sig)
+sigint_handler (_GL_UNUSED int sig)
 {
   sigint_occurred++;
 }
 
 int
-main (int argc, char *argv[])
+main ()
 {
   sigset_t set;
 

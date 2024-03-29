@@ -1,5 +1,5 @@
-# truncl.m4 serial 18
-dnl Copyright (C) 2007-2008, 2010-2023 Free Software Foundation, Inc.
+# truncl.m4 serial 20
+dnl Copyright (C) 2007-2008, 2010-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -30,7 +30,7 @@ AC_DEFUN([gl_FUNC_TRUNCL],
          [[x = funcptr(x) + truncl(x);]])],
       [TRUNCL_LIBM=])
     if test "$TRUNCL_LIBM" = "?"; then
-      save_LIBS="$LIBS"
+      saved_LIBS="$LIBS"
       LIBS="$LIBS -lm"
       AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
@@ -42,13 +42,13 @@ AC_DEFUN([gl_FUNC_TRUNCL],
              long double x;]],
            [[x = funcptr(x) + truncl(x);]])],
         [TRUNCL_LIBM="-lm"])
-      LIBS="$save_LIBS"
+      LIBS="$saved_LIBS"
     fi
     if test "$TRUNCL_LIBM" = "?"; then
       TRUNCL_LIBM=
     fi
     dnl Test whether truncl() works. It crashes on OSF/1 4.0d.
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $TRUNCL_LIBM"
     AC_CACHE_CHECK([whether truncl works], [gl_cv_func_truncl_works],
       [
@@ -64,14 +64,14 @@ int main()
           [gl_cv_func_truncl_works=yes],
           [gl_cv_func_truncl_works=no],
           [case "$host_os" in
-             osf4*)  gl_cv_func_truncl_works="guessing no" ;;
-                     # Guess yes on native Windows.
-             mingw*) gl_cv_func_truncl_works="guessing yes" ;;
-             *)      gl_cv_func_truncl_works="guessing yes" ;;
+             osf4*)             gl_cv_func_truncl_works="guessing no" ;;
+                                # Guess yes on native Windows.
+             mingw* | windows*) gl_cv_func_truncl_works="guessing yes" ;;
+             *)                 gl_cv_func_truncl_works="guessing yes" ;;
            esac
           ])
       ])
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_truncl_works" in
       *yes) ;;
       *) REPLACE_TRUNCL=1 ;;
@@ -82,7 +82,7 @@ int main()
         AC_CACHE_CHECK([whether truncl works according to ISO C 99 with IEC 60559],
           [gl_cv_func_truncl_ieee],
           [
-            save_LIBS="$LIBS"
+            saved_LIBS="$LIBS"
             LIBS="$LIBS $TRUNCL_LIBM"
             AC_RUN_IFELSE(
               [AC_LANG_SOURCE([[
@@ -110,12 +110,12 @@ int main (int argc, char *argv[])
                                      # Guess yes on musl systems.
                  *-musl* | midipix*) gl_cv_func_truncl_ieee="guessing yes" ;;
                                      # Guess yes on native Windows.
-                 mingw*)             gl_cv_func_truncl_ieee="guessing yes" ;;
+                 mingw* | windows*)  gl_cv_func_truncl_ieee="guessing yes" ;;
                                      # If we don't know, obey --enable-cross-guesses.
                  *)                  gl_cv_func_truncl_ieee="$gl_cross_guess_normal" ;;
                esac
               ])
-            LIBS="$save_LIBS"
+            LIBS="$saved_LIBS"
           ])
         case "$gl_cv_func_truncl_ieee" in
           *yes) ;;

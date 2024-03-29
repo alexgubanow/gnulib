@@ -1,5 +1,5 @@
-# ceill.m4 serial 23
-dnl Copyright (C) 2007, 2009-2023 Free Software Foundation, Inc.
+# ceill.m4 serial 25
+dnl Copyright (C) 2007, 2009-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -29,7 +29,7 @@ AC_DEFUN([gl_FUNC_CEILL],
         AC_CACHE_CHECK([whether ceill works according to ISO C 99 with IEC 60559],
           [gl_cv_func_ceill_ieee],
           [
-            save_LIBS="$LIBS"
+            saved_LIBS="$LIBS"
             LIBS="$LIBS $CEILL_LIBM"
             AC_RUN_IFELSE(
               [AC_LANG_SOURCE([[
@@ -57,12 +57,12 @@ int main (int argc, char *argv[])
                                      # Guess yes on musl systems.
                  *-musl* | midipix*) gl_cv_func_ceill_ieee="guessing yes" ;;
                                      # Guess yes on native Windows.
-                 mingw*)             gl_cv_func_ceill_ieee="guessing yes" ;;
+                 mingw* | windows*)  gl_cv_func_ceill_ieee="guessing yes" ;;
                                      # If we don't know, obey --enable-cross-guesses.
                  *)                  gl_cv_func_ceill_ieee="$gl_cross_guess_normal" ;;
                esac
               ])
-            LIBS="$save_LIBS"
+            LIBS="$saved_LIBS"
           ])
         case "$gl_cv_func_ceill_ieee" in
           *yes) ;;
@@ -78,7 +78,7 @@ int main (int argc, char *argv[])
   if test $REPLACE_CEILL = 0 ; then
     AC_CACHE_CHECK([whether ceill() works],
       [gl_cv_func_ceill_works],
-      [save_LIBS="$LIBS"
+      [saved_LIBS="$LIBS"
        LIBS="$CEILL_LIBM"
        AC_RUN_IFELSE(
          [AC_LANG_PROGRAM(
@@ -89,12 +89,12 @@ long double d = 0.3L;]],
          [gl_cv_func_ceill_works=no],
          [case "$host_os" in
             openbsd*) gl_cv_func_ceill_works="guessing no" ;;
-                      # Guess yes on native Windows.
-            mingw*)   gl_cv_func_ceill_works="guessing yes" ;;
-            *)        gl_cv_func_ceill_works="guessing yes" ;;
+                               # Guess yes on native Windows.
+            mingw* | windows*) gl_cv_func_ceill_works="guessing yes" ;;
+            *)                 gl_cv_func_ceill_works="guessing yes" ;;
           esac
          ])
-       LIBS="$save_LIBS"
+       LIBS="$saved_LIBS"
       ])
     case "$gl_cv_func_ceill_works" in
       *yes) ;;
@@ -130,7 +130,7 @@ AC_DEFUN([gl_FUNC_CEILL_LIBS],
          [[x = funcptr(x) + ceill(x);]])],
       [gl_cv_func_ceill_libm=])
     if test "$gl_cv_func_ceill_libm" = "?"; then
-      save_LIBS="$LIBS"
+      saved_LIBS="$LIBS"
       LIBS="$LIBS -lm"
       AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
@@ -142,7 +142,7 @@ AC_DEFUN([gl_FUNC_CEILL_LIBS],
              long double x;]],
            [[x = funcptr(x) + ceill(x);]])],
         [gl_cv_func_ceill_libm="-lm"])
-      LIBS="$save_LIBS"
+      LIBS="$saved_LIBS"
     fi
   ])
   CEILL_LIBM="$gl_cv_func_ceill_libm"

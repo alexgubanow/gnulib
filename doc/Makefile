@@ -1,5 +1,5 @@
 # Makefile for gnulib doc.  -*- coding: utf-8 -*-
-# Copyright (C) 2004, 2006-2023 Free Software Foundation, Inc.
+# Copyright (C) 2004, 2006-2024 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -9,9 +9,11 @@ doc = gnulib
 
 lang_env = env LANG= LC_MESSAGES= LC_ALL= LANGUAGE=
 makeinfo_prog = makeinfo
-# The customization variable CHECK_NORMAL_MENU_STRUCTURE is necessary with
-# makeinfo versions ≥ 6.8.
-MAKEINFO = $(lang_env) $(makeinfo_prog) -c CHECK_NORMAL_MENU_STRUCTURE=1
+# ASCII_DASHES_AND_QUOTES=0 is needed for makeinfo versions ≥ 7.1.
+# CHECK_NORMAL_MENU_STRUCTURE=1 is needed for makeinfo versions ≥ 6.8.
+MAKEINFO = $(lang_env) $(makeinfo_prog) \
+ -c ASCII_DASHES_AND_QUOTES=0 \
+ -c CHECK_NORMAL_MENU_STRUCTURE=1
 
 manual_opts = --no-split --reference-limit=2000
 TEXI2HTML = $(MAKEINFO) $(manual_opts) --html

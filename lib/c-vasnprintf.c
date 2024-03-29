@@ -1,5 +1,5 @@
 /* Formatted output to strings in C locale.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,6 +15,9 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
+
+/* Specification.  */
+#include "c-vasnprintf.h"
 
 #include <string.h>
 

@@ -1,5 +1,5 @@
 /* Tests of unlinkat.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ unlinker (char const *name)
 }
 
 int
-main (_GL_UNUSED int argc, char *argv[])
+main ()
 {
   /* FIXME: Add tests of fd other than ".".  */
   int result1;

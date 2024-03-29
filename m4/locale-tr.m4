@@ -1,5 +1,5 @@
-# locale-tr.m4 serial 14
-dnl Copyright (C) 2003, 2005-2023 Free Software Foundation, Inc.
+# locale-tr.m4 serial 15
+dnl Copyright (C) 2003, 2005-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -83,7 +83,7 @@ int main () {
         # "ge"(!) or "deu"(!) as "German" or "German_Germany.1252",
         # "ja" as "Japanese" or "Japanese_Japan.932",
         # and similar.
-        mingw*)
+        mingw* | windows*)
           # Test for the hypothetical native Windows locale name.
           if (LC_ALL=Turkish_Turkey.65001 LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
             gt_cv_locale_tr_utf8=Turkish_Turkey.65001
@@ -105,7 +105,7 @@ int main () {
             if (LC_ALL=tr_TR.UTF-8 LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
               gt_cv_locale_tr_utf8=tr_TR.UTF-8
             else
-              # Test for the Solaris 7 locale name.
+              # Test for the Solaris 10 locale name.
               if (LC_ALL=tr.UTF-8 LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
                 gt_cv_locale_tr_utf8=tr.UTF-8
               else

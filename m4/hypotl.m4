@@ -1,5 +1,5 @@
-# hypotl.m4 serial 12
-dnl Copyright (C) 2012-2023 Free Software Foundation, Inc.
+# hypotl.m4 serial 15
+dnl Copyright (C) 2012-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -15,17 +15,17 @@ AC_DEFUN([gl_FUNC_HYPOTL],
 
   dnl Test whether hypotl() exists. Assume that hypotl(), if it exists, is
   dnl defined in the same library as hypot().
-  save_LIBS="$LIBS"
+  saved_LIBS="$LIBS"
   LIBS="$LIBS $HYPOT_LIBM"
   AC_CHECK_FUNCS([hypotl])
-  LIBS="$save_LIBS"
+  LIBS="$saved_LIBS"
   if test $ac_cv_func_hypotl = yes; then
     HYPOTL_LIBM="$HYPOT_LIBM"
 
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $HYPOTL_LIBM"
     gl_FUNC_HYPOTL_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_hypotl_works" in
       *yes) ;;
       *) REPLACE_HYPOTL=1 ;;
@@ -37,7 +37,7 @@ AC_DEFUN([gl_FUNC_HYPOTL],
         AC_CACHE_CHECK([whether hypotl works according to ISO C 99 with IEC 60559],
           [gl_cv_func_hypotl_ieee],
           [
-            save_LIBS="$LIBS"
+            saved_LIBS="$LIBS"
             LIBS="$LIBS $HYPOTL_LIBM"
             AC_RUN_IFELSE(
               [AC_LANG_SOURCE([[
@@ -76,12 +76,12 @@ int main (int argc, char *argv[])
                                      # Guess yes on musl systems.
                  *-musl* | midipix*) gl_cv_func_hypotl_ieee="guessing yes" ;;
                                      # Guess yes on native Windows.
-                 mingw*)             gl_cv_func_hypotl_ieee="guessing yes" ;;
+                 mingw* | windows*)  gl_cv_func_hypotl_ieee="guessing yes" ;;
                                      # If we don't know, obey --enable-cross-guesses.
                  *)                  gl_cv_func_hypotl_ieee="$gl_cross_guess_normal" ;;
                esac
               ])
-            LIBS="$save_LIBS"
+            LIBS="$saved_LIBS"
           ])
         case "$gl_cv_func_hypotl_ieee" in
           *yes) ;;
@@ -135,6 +135,7 @@ dnl Test whether hypotl() works.
 dnl On OpenBSD 5.1/SPARC,
 dnl hypotl (2.5541394760659556563446062497337725156L, 7.7893454113437840832487794525518765265L)
 dnl has rounding errors that eat up the last 8 to 9 decimal digits.
+dnl On NetBSD 9.3, the result is accurate to only 16 digits.
 AC_DEFUN([gl_FUNC_HYPOTL_WORKS],
 [
   AC_REQUIRE([AC_PROG_CC])
@@ -176,10 +177,10 @@ int main ()
         [gl_cv_func_hypotl_works=yes],
         [gl_cv_func_hypotl_works=no],
         [case "$host_os" in
-           openbsd*) gl_cv_func_hypotl_works="guessing no" ;;
-                     # Guess yes on native Windows.
-           mingw*)   gl_cv_func_hypotl_works="guessing yes" ;;
-           *)        gl_cv_func_hypotl_works="guessing yes" ;;
+           openbsd*)          gl_cv_func_hypotl_works="guessing no" ;;
+                              # Guess yes on native Windows.
+           mingw* | windows*) gl_cv_func_hypotl_works="guessing yes" ;;
+           *)                 gl_cv_func_hypotl_works="guessing yes" ;;
          esac
         ])
     ])

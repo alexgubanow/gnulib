@@ -1,5 +1,5 @@
 /* Test of <sys/file.h> substitute.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,9 +29,9 @@ main (void)
     case LOCK_EX:
     case LOCK_NB:
     case LOCK_UN:
-      ;
+      break;
     default:
-      ;
+      break;
     }
   return 0;
 }

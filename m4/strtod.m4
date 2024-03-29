@@ -1,5 +1,5 @@
-# strtod.m4 serial 28
-dnl Copyright (C) 2002-2003, 2006-2023 Free Software Foundation, Inc.
+# strtod.m4 serial 29
+dnl Copyright (C) 2002-2003, 2006-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -118,7 +118,7 @@ numeric_equal (double x, double y)
                                   # Guess yes on musl systems.
               *-musl* | midipix*) gl_cv_func_strtod_works="guessing yes" ;;
                                   # Guess yes on native Windows.
-              mingw*)             gl_cv_func_strtod_works="guessing yes" ;;
+              mingw* | windows*)  gl_cv_func_strtod_works="guessing yes" ;;
               *)                  gl_cv_func_strtod_works="$gl_cross_guess_normal" ;;
             esac
            ])

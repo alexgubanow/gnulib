@@ -1,5 +1,5 @@
 /* Test of pthread_sigmask in a single-threaded program.
-   Copyright (C) 2011-2023 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 SIGNATURE_CHECK (pthread_sigmask, int, (int, const sigset_t *, sigset_t *));
 
 #include <errno.h>
-#include <limits.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -36,23 +36,17 @@ SIGNATURE_CHECK (pthread_sigmask, int, (int, const sigset_t *, sigset_t *));
 static volatile int sigint_occurred;
 
 static void
-sigint_handler (int sig)
+sigint_handler (_GL_UNUSED int sig)
 {
   sigint_occurred++;
 }
 
 int
-main (int argc, char *argv[])
+main ()
 {
   sigset_t set;
-  pid_t pid = getpid ();
+  intmax_t pid = getpid ();
   char command[80];
-
-  if (LONG_MAX < pid)
-    {
-      fputs ("Skipping test: pid too large\n", stderr);
-      return 77;
-    }
 
   signal (SIGINT, sigint_handler);
 
@@ -66,7 +60,7 @@ main (int argc, char *argv[])
   ASSERT (pthread_sigmask (SIG_BLOCK, &set, NULL) == 0);
 
   /* Request a SIGINT signal from outside.  */
-  sprintf (command, "sh -c 'sleep 1; kill -INT %ld' &", (long) pid);
+  sprintf (command, "sh -c 'sleep 1; kill -INT %"PRIdMAX"' &", pid);
   ASSERT (system (command) == 0);
 
   /* Wait.  */

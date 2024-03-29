@@ -1,5 +1,5 @@
-# locale-fr.m4 serial 22
-dnl Copyright (C) 2003, 2005-2023 Free Software Foundation, Inc.
+# locale-fr.m4 serial 23
+dnl Copyright (C) 2003, 2005-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -86,7 +86,7 @@ int main () {
         # "ge"(!) or "deu"(!) as "German" or "German_Germany.1252",
         # "ja" as "Japanese" or "Japanese_Japan.932",
         # and similar.
-        mingw*)
+        mingw* | windows*)
           # Test for the native Windows locale name.
           if (LC_ALL=French_France.1252 LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
             gt_cv_locale_fr=French_France.1252
@@ -116,7 +116,7 @@ int main () {
                 if (LC_ALL=fr_FR.iso88591 LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
                   gt_cv_locale_fr=fr_FR.iso88591
                 else
-                  # Test for the Solaris 7 locale name.
+                  # Test for the Solaris 10 locale name.
                   if (LC_ALL=fr LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
                     gt_cv_locale_fr=fr
                   else
@@ -228,7 +228,7 @@ int main () {
             # "ge"(!) or "deu"(!) as "German" or "German_Germany.1252",
             # "ja" as "Japanese" or "Japanese_Japan.932",
             # and similar.
-            mingw*)
+            mingw* | windows*)
               # Test for the hypothetical native Windows locale name.
               if (LC_ALL=French_France.65001 LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
                 gt_cv_locale_fr_utf8=French_France.65001
@@ -250,7 +250,7 @@ int main () {
                 if (LC_ALL=fr_FR.UTF-8 LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
                   gt_cv_locale_fr_utf8=fr_FR.UTF-8
                 else
-                  # Test for the Solaris 7 locale name.
+                  # Test for the Solaris 10 locale name.
                   if (LC_ALL=fr.UTF-8 LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
                     gt_cv_locale_fr_utf8=fr.UTF-8
                   else

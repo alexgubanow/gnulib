@@ -1,5 +1,5 @@
 /* Next grapheme cluster length test.
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify it
    under the terms of the GNU Lesser General Public License as published
@@ -57,11 +57,12 @@ test_u16_grapheme_next (size_t len, ...)
       if (next == NULL)
         fputs ("u16_grapheme_next returned NULL", stderr);
       else
-        fprintf (stderr, "u16_grapheme_next skipped %zu units", next - s);
+        fprintf (stderr, "u16_grapheme_next skipped %tu units", next - s);
       fprintf (stderr, ", expected %zu:\n", len);
       for (i = 0; i < n; i++)
         fprintf (stderr, " %04x", s[i]);
       putc ('\n', stderr);
+      fflush (stderr);
       abort ();
     }
 }

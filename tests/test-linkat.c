@@ -1,5 +1,5 @@
 /* Tests of linkat.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@ check_same_link (char const *name1, char const *name2)
   ASSERT (contents2);
   ASSERT (strcmp (contents1, contents2) == 0);
   if (EXPECT_LINK_HARDLINKS_SYMLINKS)
-    ASSERT (SAME_INODE (st1, st2));
+    ASSERT (psame_inode (&st1, &st2));
   free (contents1);
   free (contents2);
 }

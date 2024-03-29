@@ -1,5 +1,5 @@
-# log10f.m4 serial 13
-dnl Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# log10f.m4 serial 15
+dnl Copyright (C) 2011-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -15,17 +15,17 @@ AC_DEFUN([gl_FUNC_LOG10F],
 
   dnl Test whether log10f() exists. Assume that log10f(), if it exists, is
   dnl defined in the same library as log10().
-  save_LIBS="$LIBS"
+  saved_LIBS="$LIBS"
   LIBS="$LIBS $LOG10_LIBM"
   AC_CHECK_FUNCS([log10f])
-  LIBS="$save_LIBS"
+  LIBS="$saved_LIBS"
   if test $ac_cv_func_log10f = yes; then
     LOG10F_LIBM="$LOG10_LIBM"
 
-    save_LIBS="$LIBS"
+    saved_LIBS="$LIBS"
     LIBS="$LIBS $LOG10F_LIBM"
     gl_FUNC_LOG10F_WORKS
-    LIBS="$save_LIBS"
+    LIBS="$saved_LIBS"
     case "$gl_cv_func_log10f_works" in
       *yes) ;;
       *) REPLACE_LOG10F=1 ;;
@@ -37,7 +37,7 @@ AC_DEFUN([gl_FUNC_LOG10F],
         AC_CACHE_CHECK([whether log10f works according to ISO C 99 with IEC 60559],
           [gl_cv_func_log10f_ieee],
           [
-            save_LIBS="$LIBS"
+            saved_LIBS="$LIBS"
             LIBS="$LIBS $LOG10F_LIBM"
             AC_RUN_IFELSE(
               [AC_LANG_SOURCE([[
@@ -73,12 +73,12 @@ int main (int argc, char *argv[])
                                      # Guess yes on musl systems.
                  *-musl* | midipix*) gl_cv_func_log10f_ieee="guessing yes" ;;
                                      # Guess yes on native Windows.
-                 mingw*)             gl_cv_func_log10f_ieee="guessing yes" ;;
+                 mingw* | windows*)  gl_cv_func_log10f_ieee="guessing yes" ;;
                                      # If we don't know, obey --enable-cross-guesses.
                  *)                  gl_cv_func_log10f_ieee="$gl_cross_guess_normal" ;;
                esac
               ])
-            LIBS="$save_LIBS"
+            LIBS="$saved_LIBS"
           ])
         case "$gl_cv_func_log10f_ieee" in
           *yes) ;;
@@ -127,10 +127,10 @@ int main ()
         [gl_cv_func_log10f_works=yes],
         [gl_cv_func_log10f_works=no],
         [case "$host_os" in
-           osf*)   gl_cv_func_log10f_works="guessing no" ;;
-                   # Guess yes on native Windows.
-           mingw*) gl_cv_func_log10f_works="guessing yes" ;;
-           *)      gl_cv_func_log10f_works="guessing yes" ;;
+           osf*)              gl_cv_func_log10f_works="guessing no" ;;
+                              # Guess yes on native Windows.
+           mingw* | windows*) gl_cv_func_log10f_works="guessing yes" ;;
+           *)                 gl_cv_func_log10f_works="guessing yes" ;;
          esac
         ])
     ])

@@ -1,5 +1,5 @@
 /* Temporary files with automatic cleanup.
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2006.
 
    This file is free software: you can redistribute it and/or modify
@@ -28,7 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "error.h"
+#include <error.h>
 #include "fatal-signal.h"
 #include "asyncsafe-spin.h"
 #include "glthread/lock.h"

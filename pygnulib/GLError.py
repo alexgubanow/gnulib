@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2023 Free Software Foundation, Inc.
+# Copyright (C) 2002-2024 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +12,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+from __future__ import annotations
 
 #===============================================================================
 # Define global imports
@@ -39,13 +41,13 @@ __copyright__ = constants.__copyright__
 class GLError(Exception):
     '''Exception handler for pygnulib classes.'''
 
-    def __init__(self, errno, errinfo=None):
+    def __init__(self, errno: int, errinfo: str | float | None = None) -> None:
         '''Each error has following parameters:
         errno: code of error; used to catch error type
           1: file does not exist in GLFileSystem: <file>
           2: cannot patch file inside GLFileSystem: <file>
           3: configure file does not exist: <configure.ac>
-          4: minimum supported autoconf version is 2.59, not <version>
+          4: minimum supported autoconf version is 2.64, not <version>
           5: <gnulib-comp.m4> is expected to contain gl_M4_BASE([<m4base>])
           6: missing sourcebase argument
           7: missing docbase argument
@@ -61,12 +63,14 @@ class GLError(Exception):
          17: cannot update the given file: <file>
          18: module lacks a license: <module>
          19: could not create destination directory: <directory>
+         20: could not patch test-driver script
+         21: Option --automake-subdir is only supported if the definition of AUTOMAKE_OPTIONS in Makefile.am contains 'subdir-objects'.
         errinfo: additional information'''
         self.errno = errno
         self.errinfo = errinfo
         self.args = (self.errno, self.errinfo)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         errno = self.errno
         errinfo = self.errinfo
         if self.message == None:
@@ -78,7 +82,7 @@ class GLError(Exception):
             elif errno == 3:
                 message = "configure file does not exist: %s" % repr(errinfo)
             elif errno == 4:
-                message = "minimum supported autoconf version is 2.59, not %s" % repr(errinfo)
+                message = "minimum supported autoconf version is 2.64, not %s" % repr(errinfo)
             elif errno == 5:
                 message = "%s is expected to contain gl_M4_BASE([%s])" % (repr(os.path.join(errinfo, 'gnulib-comp.m4')), repr(errinfo))
             elif errno == 6:
@@ -109,5 +113,11 @@ class GLError(Exception):
                 message = "module lacks a license: %s" % repr(errinfo)
             elif errno == 19:
                 message = "error when running subprocess: %s" % repr(errinfo)
+            elif errno == 20:
+                message = 'could not patch test-driver script'
+            elif errno == 21:
+                message = ('Option --automake-subdir/--automake-subdir-tests are only '
+                           'supported if the definition of AUTOMAKE_OPTIONS in '
+                           'Makefile.am contains \'subdir-objects\'.')
             self.message = '[Errno %d] %s' % (errno, message)
         return self.message

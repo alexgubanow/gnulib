@@ -1,5 +1,5 @@
-# roundf.m4 serial 25
-dnl Copyright (C) 2007-2023 Free Software Foundation, Inc.
+# roundf.m4 serial 28
+dnl Copyright (C) 2007-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -31,7 +31,7 @@ AC_DEFUN([gl_FUNC_ROUNDF],
     AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
     AC_CACHE_CHECK([whether roundf works], [gl_cv_func_roundf_works],
       [
-        save_LIBS="$LIBS"
+        saved_LIBS="$LIBS"
         LIBS="$LIBS $ROUNDF_LIBM"
         AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <float.h>
@@ -57,19 +57,25 @@ int main()
   return (x < 0.5f && roundf (x) != 0.0f);
 }]])], [gl_cv_func_roundf_works=yes], [gl_cv_func_roundf_works=no],
         [case "$host_os" in
-                   # Guess yes on MSVC, no on mingw.
-           mingw*) AC_EGREP_CPP([Known], [
+           # Guess yes on MSVC, no on mingw.
+           windows*-msvc*)
+             gl_cv_func_roundf_works="guessing yes"
+             ;;
+           mingw* | windows*)
+             AC_EGREP_CPP([Known], [
 #ifdef _MSC_VER
  Known
 #endif
-                     ],
-                     [gl_cv_func_roundf_works="guessing yes"],
-                     [gl_cv_func_roundf_works="guessing no"])
-                   ;;
-           *)      gl_cv_func_roundf_works="guessing yes" ;;
+               ],
+               [gl_cv_func_roundf_works="guessing yes"],
+               [gl_cv_func_roundf_works="guessing no"])
+             ;;
+           *)
+             gl_cv_func_roundf_works="guessing yes"
+             ;;
          esac
         ])
-        LIBS="$save_LIBS"
+        LIBS="$saved_LIBS"
       ])
     case "$gl_cv_func_roundf_works" in
       *no) REPLACE_ROUNDF=1 ;;
@@ -81,7 +87,7 @@ int main()
         AC_CACHE_CHECK([whether roundf works according to ISO C 99 with IEC 60559],
           [gl_cv_func_roundf_ieee],
           [
-            save_LIBS="$LIBS"
+            saved_LIBS="$LIBS"
             LIBS="$LIBS $ROUNDF_LIBM"
             AC_RUN_IFELSE(
               [AC_LANG_SOURCE([[
@@ -118,7 +124,8 @@ int main (int argc, char *argv[])
                                      # Guess yes on musl systems.
                  *-musl* | midipix*) gl_cv_func_roundf_ieee="guessing yes" ;;
                                      # Guess yes on MSVC, no on mingw.
-                 mingw*)             AC_EGREP_CPP([Known], [
+                 windows*-msvc*)     gl_cv_func_roundf_ieee="guessing yes" ;;
+                 mingw* | windows*)  AC_EGREP_CPP([Known], [
 #ifdef _MSC_VER
  Known
 #endif
@@ -130,7 +137,7 @@ int main (int argc, char *argv[])
                  *)                  gl_cv_func_roundf_ieee="$gl_cross_guess_normal" ;;
                esac
               ])
-            LIBS="$save_LIBS"
+            LIBS="$saved_LIBS"
           ])
         case "$gl_cv_func_roundf_ieee" in
           *yes) ;;

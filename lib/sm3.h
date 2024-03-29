@@ -1,6 +1,6 @@
 /* Declarations of functions and data types used for SM3 sum library
    function.
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -39,7 +39,21 @@
 #  ifndef OPENSSL_API_COMPAT
 #   define OPENSSL_API_COMPAT 0x10101000L /* FIXME: Use OpenSSL 1.1+ API.  */
 #  endif
-#  include <openssl/sm3.h>
+/* If <openssl/macros.h> would give a compile-time error, don't use OpenSSL.  */
+#  include <openssl/opensslv.h>
+#  if OPENSSL_VERSION_MAJOR >= 3
+#   include <openssl/configuration.h>
+#   if (OPENSSL_CONFIGURED_API \
+        < (OPENSSL_API_COMPAT < 0x900000L ? OPENSSL_API_COMPAT : \
+           ((OPENSSL_API_COMPAT >> 28) & 0xF) * 10000 \
+           + ((OPENSSL_API_COMPAT >> 20) & 0xFF) * 100 \
+           + ((OPENSSL_API_COMPAT >> 12) & 0xFF)))
+#    undef HAVE_OPENSSL_SM3
+#   endif
+#  endif
+#  if HAVE_OPENSSL_SM3
+#   include <openssl/sm3.h>
+#  endif
 # endif
 
 # ifdef __cplusplus
